@@ -172,6 +172,20 @@ export class Users extends Base {
 		return null;
 	}
 
+	setLastRoutingTime(userId) {
+		const query = {
+			_id: userId,
+		};
+
+		const update = {
+			$set: {
+				lastRoutingTime: new Date(),
+			},
+		};
+
+		return this.update(query, update);
+	}
+
 	setLivechatStatus(userId, status) {
 		const query = {
 			_id: userId,
@@ -372,6 +386,16 @@ export class Users extends Base {
 		}
 
 		const query = { username };
+
+		return this.findOne(query, options);
+	}
+
+	findOneByUsernameAndServiceNameIgnoringCase(username, serviceName, options) {
+		if (typeof username === 'string') {
+			username = new RegExp(`^${ s.escapeRegExp(username) }$`, 'i');
+		}
+
+		const query = { username, [`services.${ serviceName }.id`]: serviceName };
 
 		return this.findOne(query, options);
 	}
@@ -1123,6 +1147,16 @@ Find users to send a message by email if:
 
 	getActiveLocalUserCount() {
 		return this.findActive().count() - this.findActiveRemote().count();
+	}
+
+	removeOlderResumeTokensByUserId(userId, fromDate) {
+		this.update(userId, {
+			$pull: {
+				'services.resume.loginTokens': {
+					when: { $lt: fromDate },
+				},
+			},
+		});
 	}
 }
 
