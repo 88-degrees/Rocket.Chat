@@ -374,7 +374,7 @@ export class APIClass extends Restivus {
 							'error-unauthorized': 'unauthorized',
 						}[e.error] || 'failure';
 
-						result = API.v1[apiMethod](typeof e === 'string' ? e : e.message, e.error, undefined, e);
+						result = API.v1[apiMethod](typeof e === 'string' ? e : e.message, e.error, process.env.TEST_MODE ? e.stack : undefined, e);
 					} finally {
 						delete Accounts._accountData[connection.id];
 					}
@@ -616,7 +616,7 @@ const defaultOptionsEndpoint = function _defaultOptionsEndpoint() {
 			this.response.writeHead(200, {
 				'Access-Control-Allow-Origin': settings.get('API_CORS_Origin'),
 				'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, HEAD, PATCH',
-				'Access-Control-Allow-Headers': 'Origin, X-Requested-With, Content-Type, Accept, X-User-Id, X-Auth-Token, x-visitor-token',
+				'Access-Control-Allow-Headers': 'Origin, X-Requested-With, Content-Type, Accept, X-User-Id, X-Auth-Token, x-visitor-token, Authorization',
 			});
 		} else {
 			this.response.writeHead(405);
