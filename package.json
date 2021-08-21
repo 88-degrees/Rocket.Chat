@@ -245,7 +245,7 @@
 		"memoize-one": "^5.2.1",
 		"meteor-node-stubs": "^1.0.3",
 		"mime-db": "^1.48.0",
-		"mime-type": "^3.1.0",
+		"mime-type": "^4.0.0",
 		"mkdirp": "^0.5.5",
 		"moleculer": "^0.14.14",
 		"moment": "^2.29.1",
