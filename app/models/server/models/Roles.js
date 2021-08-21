@@ -1,5 +1,4 @@
 import { Base } from './_Base';
-
 import * as Models from '..';
 
 
@@ -11,7 +10,7 @@ export class Roles extends Base {
 	}
 
 	findUsersInRole(name, scope, options) {
-		const role = this.findOne(name);
+		const role = this.findOneByName(name);
 		const roleScope = (role && role.scope) || 'Users';
 		const model = Models[roleScope];
 
@@ -21,7 +20,7 @@ export class Roles extends Base {
 	isUserInRoles(userId, roles, scope) {
 		roles = [].concat(roles);
 		return roles.some((roleName) => {
-			const role = this.findOne(roleName);
+			const role = this.findOneByName(roleName);
 			const roleScope = (role && role.scope) || 'Users';
 			const model = Models[roleScope];
 
@@ -29,35 +28,49 @@ export class Roles extends Base {
 		});
 	}
 
+	updateById(_id, name, scope, description, mandatory2fa) {
+		const query = { _id };
+
+		const update = {
+			$set: {
+				...name && { name },
+				...scope && { scope },
+				...description && { description },
+				...mandatory2fa && { mandatory2fa },
+			},
+		};
+
+		return this.update(query, update);
+	}
+
+	createWithRandomId(name, scope = 'Users', description = '', protectedRole = true, mandatory2fa = false) {
+		const role = {
+			name,
+			scope,
+			description,
+			protected: protectedRole,
+			mandatory2fa,
+		};
+
+		return this.insert(role);
+	}
+
 	createOrUpdate(name, scope = 'Users', description = '', protectedRole = true, mandatory2fa = false) {
 		const queryData = {
 			name,
 			scope,
-			protected: protectedRole,
-		};
-
-		const updateData = {
-			...queryData,
 			description,
+			protected: protectedRole,
 			mandatory2fa,
 		};
 
-		const exists = this.findOne({
-			_id: name,
-			...queryData,
-		}, { fields: { _id: 1 } });
-
-		if (exists) {
-			return exists._id;
-		}
-
-		this.upsert({ _id: name }, { $set: updateData });
+		this.upsert({ _id: name }, { $set: queryData });
 	}
 
 	addUserRoles(userId, roles, scope) {
 		roles = [].concat(roles);
 		for (const roleName of roles) {
-			const role = this.findOne(roleName);
+			const role = this.findOneByName(roleName);
 			const roleScope = (role && role.scope) || 'Users';
 			const model = Models[roleScope];
 
@@ -69,7 +82,7 @@ export class Roles extends Base {
 	removeUserRoles(userId, roles, scope) {
 		roles = [].concat(roles);
 		for (const roleName of roles) {
-			const role = this.findOne(roleName);
+			const role = this.findOneByName(roleName);
 			const roleScope = (role && role.scope) || 'Users';
 			const model = Models[roleScope];
 
@@ -90,6 +103,14 @@ export class Roles extends Base {
 		return this.findOne(query, options);
 	}
 
+	findOneByName(name, options) {
+		const query = {
+			name,
+		};
+
+		return this.findOne(query, options);
+	}
+
 	findByUpdatedDate(updatedAfterDate, options) {
 		const query = {
 			_updatedAt: { $gte: new Date(updatedAfterDate) },
@@ -99,7 +120,7 @@ export class Roles extends Base {
 	}
 
 	canAddUserToRole(uid, roleName, scope) {
-		const role = this.findOne({ _id: roleName }, { fields: { scope: 1 } });
+		const role = this.findOne({ name: roleName }, { fields: { scope: 1 } });
 		if (!role) {
 			return false;
 		}

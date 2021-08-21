@@ -1,6 +1,7 @@
 import { Meteor } from 'meteor/meteor';
 import _ from 'underscore';
 import s from 'underscore.string';
+import { escapeRegExp } from '@rocket.chat/string-helpers';
 
 import { Base } from './_Base';
 import Settings from './Settings';
@@ -207,7 +208,7 @@ export class LivechatVisitors extends Base {
 
 	findOneGuestByEmailAddress(emailAddress) {
 		const query = {
-			'visitorEmails.address': new RegExp(`^${ s.escapeRegExp(emailAddress) }$`, 'i'),
+			'visitorEmails.address': new RegExp(`^${ escapeRegExp(emailAddress) }$`, 'i'),
 		};
 
 		return this.findOne(query);

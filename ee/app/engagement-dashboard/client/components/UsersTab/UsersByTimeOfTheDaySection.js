@@ -1,20 +1,16 @@
 import { ResponsiveHeatMap } from '@nivo/heatmap';
-import { Box, Flex, Select, Skeleton } from '@rocket.chat/fuselage';
+import { Box, Flex, Select, Skeleton, ActionButton } from '@rocket.chat/fuselage';
 import moment from 'moment';
 import React, { useMemo, useState } from 'react';
 
 import { useTranslation } from '../../../../../../client/contexts/TranslationContext';
 import { useEndpointData } from '../../../../../../client/hooks/useEndpointData';
 import { Section } from '../Section';
-import { ActionButton } from '../../../../../../client/components/basic/Buttons/ActionButton';
-import { saveFile } from '../../../../../../client/lib/saveFile';
+import { downloadCsvAs } from '../../../../../../client/lib/download';
 
-const convertDataToCSV = (data) => `// date, users
-${ data.map(({ users, hour, day, month, year }) => ({ date: moment([year, month - 1, day, hour, 0, 0, 0]), users })).sort((a, b) => a > b).map(({ date, users }) => `${ date.toISOString() }, ${ users }`).join('\n') }`;
-
-
-export function UsersByTimeOfTheDaySection() {
+const UsersByTimeOfTheDaySection = ({ timezone }) => {
 	const t = useTranslation();
+	const utc = timezone === 'utc';
 
 	const periodOptions = useMemo(() => [
 		['last 7 days', t('Last_7_days')],
@@ -28,23 +24,35 @@ export function UsersByTimeOfTheDaySection() {
 		switch (periodId) {
 			case 'last 7 days':
 				return {
-					start: moment().set({ hour: 0, minute: 0, second: 0, millisecond: 0 }).subtract(7, 'days'),
-					end: moment().set({ hour: 0, minute: 0, second: 0, millisecond: 0 }).subtract(1),
+					start: utc
+						? moment.utc().startOf('day').subtract(7, 'days')
+						: moment().startOf('day').subtract(8, 'days'),
+					end: utc
+						? moment.utc().endOf('day').subtract(1, 'days')
+						: moment().endOf('day'),
 				};
 
 			case 'last 30 days':
 				return {
-					start: moment().set({ hour: 0, minute: 0, second: 0, millisecond: 0 }).subtract(30, 'days'),
-					end: moment().set({ hour: 0, minute: 0, second: 0, millisecond: 0 }).subtract(1),
+					start: utc
+						? moment.utc().startOf('day').subtract(30, 'days')
+						: moment().startOf('day').subtract(31, 'days'),
+					end: utc
+						? moment.utc().endOf('day').subtract(1, 'days')
+						: moment().endOf('day'),
 				};
 
 			case 'last 90 days':
 				return {
-					start: moment().set({ hour: 0, minute: 0, second: 0, millisecond: 0 }).subtract(90, 'days'),
-					end: moment().set({ hour: 0, minute: 0, second: 0, millisecond: 0 }).subtract(1),
+					start: utc
+						? moment.utc().startOf('day').subtract(90, 'days')
+						: moment().startOf('day').subtract(91, 'days'),
+					end: utc
+						? moment.utc().endOf('day').subtract(1, 'days')
+						: moment().endOf('day'),
 				};
 		}
-	}, [periodId]);
+	}, [periodId, utc]);
 
 	const handlePeriodChange = (periodId) => setPeriodId(periodId);
 
@@ -53,7 +61,7 @@ export function UsersByTimeOfTheDaySection() {
 		end: period.end.toISOString(),
 	}), [period]);
 
-	const data = useEndpointData('engagement-dashboard/users/users-by-time-of-the-day-in-a-week', params);
+	const { value: data } = useEndpointData('engagement-dashboard/users/users-by-time-of-the-day-in-a-week', useMemo(() => params, [params]));
 
 	const [
 		dates,
@@ -63,8 +71,10 @@ export function UsersByTimeOfTheDaySection() {
 			return [];
 		}
 
-		const dates = Array.from({ length: moment(period.end).diff(period.start, 'days') + 1 },
-			(_, i) => moment(period.start).add(i, 'days'));
+		const dates = Array.from({ length: utc
+			? moment(period.end).diff(period.start, 'days') + 1
+			: moment(period.end).diff(period.start, 'days') - 1 },
+		(_, i) => moment(period.start).endOf('day').add(utc ? i : i + 1, 'days'));
 
 		const values = Array.from({ length: 24 }, (_, hour) => ({
 			hour: String(hour),
@@ -72,29 +82,52 @@ export function UsersByTimeOfTheDaySection() {
 				.reduce((obj, elem) => ({ ...obj, ...elem }), {}),
 		}));
 
+		const timezoneOffset = moment().utcOffset() / 60;
+
 		for (const { users, hour, day, month, year } of data.week) {
-			const date = moment([year, month - 1, day, 0, 0, 0, 0]).toISOString();
-			values[hour][date] += users;
+			const date = utc
+				? moment.utc([year, month - 1, day, hour])
+				: moment([year, month - 1, day, hour]).add(timezoneOffset, 'hours');
+
+			if (utc || (!date.isSame(period.end) && !date.clone().startOf('day').isSame(period.start))) {
+				values[date.hour()][date.endOf('day').toISOString()] += users;
+			}
 		}
 
 		return [
 			dates.map((date) => date.toISOString()),
 			values,
 		];
-	}, [data, period.end, period.start]);
+	}, [data, period.end, period.start, utc]);
 
 	const downloadData = () => {
-		saveFile(convertDataToCSV(data.week), `UsersByTimeOfTheDaySection_start_${ params.start }_end_${ params.end }.csv`);
+		const _data = data.week.map(({
+			users,
+			hour,
+			day,
+			month,
+			year,
+		}) => ({
+			date: moment([year, month - 1, day, hour, 0, 0, 0]),
+			users,
+		}))
+			.sort((a, b) => a > b)
+			.map(({ date, users }) => [date.toISOString(), users]);
+		downloadCsvAs(_data, `UsersByTimeOfTheDaySection_start_${ params.start }_end_${ params.end }`);
 	};
 	return <Section
 		title={t('Users_by_time_of_day')}
-		filter={<><Select options={periodOptions} value={periodId} onChange={handlePeriodChange} />{<ActionButton mis='x16' onClick={downloadData} aria-label={t('Download_Info')} icon='download'/>}</>}
+		filter={<><Select options={periodOptions} value={periodId} onChange={handlePeriodChange} />{<ActionButton small mis='x16' onClick={downloadData} aria-label={t('Download_Info')} icon='download'/>}</>}
 	>
 		{data
 			? <Box display='flex' style={{ height: 696 }}>
 				<Flex.Item align='stretch' grow={1} shrink={0}>
 					<Box style={{ position: 'relative' }}>
-						<Box style={{ position: 'absolute', width: '100%', height: '100%' }}>
+						<Box style={{
+							position: 'absolute',
+							width: '100%',
+							height: '100%',
+						}}>
 							<ResponsiveHeatMap
 								data={values}
 								indexBy='hour'
@@ -102,7 +135,7 @@ export function UsersByTimeOfTheDaySection() {
 								padding={4}
 								margin={{
 									// TODO: Get it from theme
-									left: 40,
+									left: 60,
 									bottom: 20,
 								}}
 								colors={[
@@ -170,4 +203,6 @@ export function UsersByTimeOfTheDaySection() {
 			</Box>
 			: <Skeleton variant='rect' height={696} />}
 	</Section>;
-}
+};
+
+export default UsersByTimeOfTheDaySection;

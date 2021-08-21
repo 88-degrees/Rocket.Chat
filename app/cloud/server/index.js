@@ -3,6 +3,7 @@ import { SyncedCron } from 'meteor/littledata:synced-cron';
 
 import './methods';
 import { getWorkspaceAccessToken } from './functions/getWorkspaceAccessToken';
+import { getWorkspaceAccessTokenWithScope } from './functions/getWorkspaceAccessTokenWithScope';
 import { getWorkspaceLicense } from './functions/getWorkspaceLicense';
 import { getUserCloudAccessToken } from './functions/getUserCloudAccessToken';
 import { getWorkspaceKey } from './functions/getWorkspaceKey';
@@ -27,7 +28,7 @@ Meteor.startup(function() {
 			return SyncedCron.remove(licenseCronName);
 		}
 
-		syncWorkspace();
+		Meteor.defer(() => syncWorkspace());
 
 		SyncedCron.add({
 			name: licenseCronName,
@@ -40,4 +41,4 @@ Meteor.startup(function() {
 	});
 });
 
-export { getWorkspaceAccessToken, getWorkspaceLicense, getWorkspaceKey, getUserCloudAccessToken };
+export { getWorkspaceAccessToken, getWorkspaceAccessTokenWithScope, getWorkspaceLicense, getWorkspaceKey, getUserCloudAccessToken };

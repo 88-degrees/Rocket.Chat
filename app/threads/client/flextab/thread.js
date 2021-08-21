@@ -2,7 +2,7 @@ import _ from 'underscore';
 import { Meteor } from 'meteor/meteor';
 import { Mongo } from 'meteor/mongo';
 import { Template } from 'meteor/templating';
-import { HTML } from 'meteor/htmljs';
+import { Session } from 'meteor/session';
 import { ReactiveDict } from 'meteor/reactive-dict';
 import { Tracker } from 'meteor/tracker';
 import { FlowRouter } from 'meteor/kadira:flow-router';
@@ -13,31 +13,19 @@ import { messageContext } from '../../../ui-utils/client/lib/messageContext';
 import { upsertMessageBulk } from '../../../ui-utils/client/lib/RoomHistoryManager';
 import { Messages } from '../../../models';
 import { fileUpload } from '../../../ui/client/lib/fileUpload';
-import { createTemplateForComponent } from '../../../../client/reactAdapters';
 import { dropzoneEvents, dropzoneHelpers } from '../../../ui/client/views/app/room';
 import './thread.html';
 import { getUserPreference } from '../../../utils';
 import { settings } from '../../../settings/client';
 import { callbacks } from '../../../callbacks/client';
 import './messageBoxFollow';
-
-createTemplateForComponent('Checkbox', async () => {
-	const { CheckBox } = await import('@rocket.chat/fuselage');
-	return { default: CheckBox };
-}, {
-	// eslint-disable-next-line new-cap
-	renderContainerView: () => HTML.DIV({ class: 'rcx-checkbox', style: 'display: flex;' }),
-});
+import { getCommonRoomEvents } from '../../../ui/client/views/app/lib/getCommonRoomEvents';
 
 const sort = { ts: 1 };
 
-createTemplateForComponent('ThreadComponent', () => import('../components/ThreadComponent'), {
-	// eslint-disable-next-line new-cap
-	renderContainerView: () => HTML.DIV({ class: 'contextual-bar', style: 'display: flex; height: 100%;' }),
-});
-
 Template.thread.events({
 	...dropzoneEvents,
+	...getCommonRoomEvents(),
 	'click .js-close'(e) {
 		e.preventDefault();
 		e.stopPropagation();
@@ -84,21 +72,12 @@ Template.thread.helpers({
 		const instance = Template.instance();
 		const { mainMessage: { rid, _id: tmid }, subscription } = Template.currentData();
 
-		const thread = Messages.findOne({ _id: tmid }, { fields: { replies: 1 } });
-
-		const following = thread?.replies?.includes(Meteor.userId());
 
 		const showFormattingTips = settings.get('Message_ShowFormattingTips');
 		return {
 			showFormattingTips,
 			tshow: instance.state.get('sendToChannel'),
 			subscription,
-			...!following && {
-				customAction: {
-					template: 'messageBoxFollow',
-					data: { tmid },
-				},
-			},
 			rid,
 			tmid,
 			onSend: (...args) => {
@@ -140,7 +119,7 @@ Template.thread.onRendered(function() {
 	const tmid = Tracker.nonreactive(() => this.state.get('tmid'));
 	this.atBottom = true;
 
-	this.chatMessages = new ChatMessages();
+	this.chatMessages = new ChatMessages(this.Threads);
 	this.chatMessages.initializeWrapper(this.find('.js-scroll-thread'));
 	this.chatMessages.initializeInput(this.find('.js-input-message'), { rid, tmid });
 
@@ -172,7 +151,7 @@ Template.thread.onRendered(function() {
 		this.callbackRemove = () => callbacks.remove('streamNewMessage', `thread-${ rid }`);
 
 		callbacks.add('streamNewMessage', _.debounce((msg) => {
-			if (rid !== msg.rid || msg.editedAt || msg.tmid !== tmid) {
+			if (Session.get('openedRoom') !== msg.rid || rid !== msg.rid || msg.editedAt || msg.tmid !== tmid) {
 				return;
 			}
 			Meteor.call('readThreads', tmid);
@@ -275,9 +254,15 @@ Template.thread.onCreated(async function() {
 });
 
 Template.thread.onDestroyed(function() {
-	const { Threads, threadsObserve, callbackRemove } = this;
+	const { Threads, threadsObserve, callbackRemove, state } = this;
 	Threads.remove({});
 	threadsObserve && threadsObserve.stop();
 
 	callbackRemove && callbackRemove();
+
+	const tmid = state.get('tmid');
+	const rid = state.get('rid');
+	if (rid && tmid) {
+		delete chatMessages[`${ rid }-${ tmid }`];
+	}
 });

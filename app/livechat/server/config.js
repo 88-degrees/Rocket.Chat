@@ -5,7 +5,7 @@ import { settings } from '../../settings';
 Meteor.startup(function() {
 	settings.addGroup('Omnichannel');
 
-	settings.add('Livechat_enabled', false, {
+	settings.add('Livechat_enabled', true, {
 		type: 'boolean',
 		group: 'Omnichannel',
 		public: true,
@@ -22,6 +22,20 @@ Meteor.startup(function() {
 		type: 'color',
 		editor: 'color',
 		allowedTypes: ['color', 'expression'],
+		group: 'Omnichannel',
+		section: 'Livechat',
+		public: true,
+	});
+
+	settings.add('Livechat_enable_message_character_limit', false, {
+		type: 'boolean',
+		group: 'Omnichannel',
+		section: 'Livechat',
+		public: true,
+	});
+
+	settings.add('Livechat_message_character_limit', 0, {
+		type: 'int',
 		group: 'Omnichannel',
 		section: 'Livechat',
 		public: true,

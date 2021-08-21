@@ -1,6 +1,7 @@
 import { Meteor } from 'meteor/meteor';
 import { Match } from 'meteor/check';
 import _ from 'underscore';
+import mem from 'mem';
 
 import { Base } from './_Base';
 import Rooms from './Rooms';
@@ -32,6 +33,7 @@ export class Subscriptions extends Base {
 		this.tryEnsureIndex({ autoTranslateLanguage: 1 }, { sparse: 1 });
 		this.tryEnsureIndex({ 'userHighlights.0': 1 }, { sparse: 1 });
 		this.tryEnsureIndex({ prid: 1 });
+		this.tryEnsureIndex({ 'u._id': 1, open: 1, department: 1 });
 	}
 
 	findByRoomIds(roomIds) {
@@ -129,22 +131,6 @@ export class Subscriptions extends Base {
 		return this.find(query, options);
 	}
 
-	updateAudioNotificationsById(_id, audioNotifications) {
-		const query = {
-			_id,
-		};
-
-		const update = {};
-
-		if (audioNotifications === 'default') {
-			update.$unset = { audioNotifications: 1 };
-		} else {
-			update.$set = { audioNotifications };
-		}
-
-		return this.update(query, update);
-	}
-
 	updateAudioNotificationValueById(_id, audioNotificationValue) {
 		const query = {
 			_id,
@@ -159,66 +145,22 @@ export class Subscriptions extends Base {
 		return this.update(query, update);
 	}
 
-	updateDesktopNotificationsById(_id, desktopNotifications) {
+	updateNotificationsPrefById(_id, notificationPref, notificationField, notificationPrefOrigin) {
 		const query = {
 			_id,
 		};
 
 		const update = {};
 
-		if (desktopNotifications === null) {
+		if (notificationPref === null) {
 			update.$unset = {
-				desktopNotifications: 1,
-				desktopPrefOrigin: 1,
+				[notificationField]: 1,
+				[notificationPrefOrigin]: 1,
 			};
 		} else {
 			update.$set = {
-				desktopNotifications: desktopNotifications.value,
-				desktopPrefOrigin: desktopNotifications.origin,
-			};
-		}
-
-		return this.update(query, update);
-	}
-
-	updateMobilePushNotificationsById(_id, mobilePushNotifications) {
-		const query = {
-			_id,
-		};
-
-		const update = {};
-
-		if (mobilePushNotifications === null) {
-			update.$unset = {
-				mobilePushNotifications: 1,
-				mobilePrefOrigin: 1,
-			};
-		} else {
-			update.$set = {
-				mobilePushNotifications: mobilePushNotifications.value,
-				mobilePrefOrigin: mobilePushNotifications.origin,
-			};
-		}
-
-		return this.update(query, update);
-	}
-
-	updateEmailNotificationsById(_id, emailNotifications) {
-		const query = {
-			_id,
-		};
-
-		const update = {};
-
-		if (emailNotifications === null) {
-			update.$unset = {
-				emailNotifications: 1,
-				emailPrefOrigin: 1,
-			};
-		} else {
-			update.$set = {
-				emailNotifications: emailNotifications.value,
-				emailPrefOrigin: emailNotifications.origin,
+				[notificationField]: notificationPref.value,
+				[notificationPrefOrigin]: notificationPref.origin,
 			};
 		}
 
@@ -279,6 +221,19 @@ export class Subscriptions extends Base {
 		};
 
 		return this.update(query, update);
+	}
+
+	changeDepartmentByRoomId(rid, department) {
+		const query = {
+			rid,
+		};
+		const update = {
+			$set: {
+				department,
+			},
+		};
+
+		this.update(query, update);
 	}
 
 	findAlwaysNotifyAudioUsersByRoomId(roomId) {
@@ -439,7 +394,7 @@ export class Subscriptions extends Base {
 	}
 
 	// FIND ONE
-	findOneByRoomIdAndUserId(roomId, userId, options) {
+	findOneByRoomIdAndUserId(roomId, userId, options = {}) {
 		const query = {
 			rid: roomId,
 			'u._id': userId,
@@ -468,15 +423,26 @@ export class Subscriptions extends Base {
 
 	// FIND
 	findByUserId(userId, options) {
-		const query =			{ 'u._id': userId };
+		const query = { 'u._id': userId };
 
 		return this.find(query, options);
 	}
+
+	cachedFindByUserId = mem(this.findByUserId.bind(this), { maxAge: 5000 });
 
 	findByUserIdExceptType(userId, typeException, options) {
 		const query = {
 			'u._id': userId,
 			t: { $ne: typeException },
+		};
+
+		return this.find(query, options);
+	}
+
+	findByUserIdAndRoomIds(userId, roomIds, options) {
+		const query = {
+			'u._id': userId,
+			rid: { $in: roomIds },
 		};
 
 		return this.find(query, options);
@@ -497,6 +463,15 @@ export class Subscriptions extends Base {
 			t: {
 				$in: types,
 			},
+		};
+
+		return this.find(query, options);
+	}
+
+	findByUserIdAndRoles(userId, roles, options) {
+		const query = {
+			'u._id': userId,
+			roles: { $in: roles },
 		};
 
 		return this.find(query, options);
@@ -547,7 +522,7 @@ export class Subscriptions extends Base {
 		return this.find(query, options);
 	}
 
-	findByRoomIdAndNotUserId(roomId, userId, options) {
+	findByRoomIdAndNotUserId(roomId, userId, options = {}) {
 		const query = {
 			rid: roomId,
 			'u._id': {
@@ -567,15 +542,11 @@ export class Subscriptions extends Base {
 		return this.find(query, options);
 	}
 
-	getLastSeen(options) {
-		if (options == null) {
-			options = {};
-		}
-		const query = { ls: { $exists: 1 } };
+	getLastSeen(options = { fields: { _id: 0, ls: 1 } }) {
 		options.sort = { ls: -1 };
 		options.limit = 1;
-		const [subscription] = this.find(query, options).fetch();
-		return subscription && subscription.ls;
+		const [subscription] = this.find({}, options).fetch();
+		return subscription?.ls;
 	}
 
 	findByRoomIdAndUserIds(roomId, userIds, options) {
@@ -642,7 +613,7 @@ export class Subscriptions extends Base {
 
 	// UPDATE
 	archiveByRoomId(roomId) {
-		const query =			{ rid: roomId };
+		const query = { rid: roomId };
 
 		const update = {
 			$set: {
@@ -861,14 +832,14 @@ export class Subscriptions extends Base {
 		return this.update(query, update, { multi: true });
 	}
 
-	incUnreadForRoomIdExcludingUserId(roomId, userId, inc) {
+	incUnreadForRoomIdExcludingUserIds(roomId, userIds, inc) {
 		if (inc == null) {
 			inc = 1;
 		}
 		const query = {
 			rid: roomId,
 			'u._id': {
-				$ne: userId,
+				$nin: userIds,
 			},
 		};
 
@@ -1137,102 +1108,34 @@ export class Subscriptions extends Base {
 		return this.update(query, update, { multi: true });
 	}
 
-	clearDesktopNotificationUserPreferences(userId) {
+	clearNotificationUserPreferences(userId, notificationField, notificationOriginField) {
 		const query = {
 			'u._id': userId,
-			desktopPrefOrigin: 'user',
+			[notificationOriginField]: 'user',
 		};
 
 		const update = {
 			$unset: {
-				desktopNotifications: 1,
-				desktopPrefOrigin: 1,
+				[notificationOriginField]: 1,
+				[notificationField]: 1,
 			},
 		};
 
 		return this.update(query, update, { multi: true });
 	}
 
-	updateDesktopNotificationUserPreferences(userId, desktopNotifications) {
+	updateNotificationUserPreferences(userId, userPref, notificationField, notificationOriginField) {
 		const query = {
 			'u._id': userId,
-			desktopPrefOrigin: {
+			[notificationOriginField]: {
 				$ne: 'subscription',
 			},
 		};
 
 		const update = {
 			$set: {
-				desktopNotifications,
-				desktopPrefOrigin: 'user',
-			},
-		};
-
-		return this.update(query, update, { multi: true });
-	}
-
-	clearMobileNotificationUserPreferences(userId) {
-		const query = {
-			'u._id': userId,
-			mobilePrefOrigin: 'user',
-		};
-
-		const update = {
-			$unset: {
-				mobilePushNotifications: 1,
-				mobilePrefOrigin: 1,
-			},
-		};
-
-		return this.update(query, update, { multi: true });
-	}
-
-	updateMobileNotificationUserPreferences(userId, mobilePushNotifications) {
-		const query = {
-			'u._id': userId,
-			mobilePrefOrigin: {
-				$ne: 'subscription',
-			},
-		};
-
-		const update = {
-			$set: {
-				mobilePushNotifications,
-				mobilePrefOrigin: 'user',
-			},
-		};
-
-		return this.update(query, update, { multi: true });
-	}
-
-	clearEmailNotificationUserPreferences(userId) {
-		const query = {
-			'u._id': userId,
-			emailPrefOrigin: 'user',
-		};
-
-		const update = {
-			$unset: {
-				emailNotifications: 1,
-				emailPrefOrigin: 1,
-			},
-		};
-
-		return this.update(query, update, { multi: true });
-	}
-
-	updateEmailNotificationUserPreferences(userId, emailNotifications) {
-		const query = {
-			'u._id': userId,
-			emailPrefOrigin: {
-				$ne: 'subscription',
-			},
-		};
-
-		const update = {
-			$set: {
-				emailNotifications,
-				emailPrefOrigin: 'user',
+				[notificationField]: userPref,
+				[notificationOriginField]: 'user',
 			},
 		};
 
@@ -1308,6 +1211,10 @@ export class Subscriptions extends Base {
 
 		Rooms.incUsersCountById(room._id);
 
+		if (!['d', 'l'].includes(room.t)) {
+			Users.addRoomByUserId(user._id, room._id);
+		}
+
 		return result;
 	}
 
@@ -1326,6 +1233,8 @@ export class Subscriptions extends Base {
 			Rooms.incUsersCountNotDMsByIds(roomIds, -1);
 		}
 
+		Users.removeAllRoomsByUserId(userId);
+
 		return result;
 	}
 
@@ -1339,6 +1248,8 @@ export class Subscriptions extends Base {
 		if (Match.test(result, Number) && result > 0) {
 			Rooms.incUsersCountById(roomId, - result);
 		}
+
+		Users.removeRoomByRoomId(roomId);
 
 		return result;
 	}
@@ -1355,39 +1266,68 @@ export class Subscriptions extends Base {
 			Rooms.incUsersCountById(roomId, - result);
 		}
 
+		Users.removeRoomByUserId(userId, roomId);
+
 		return result;
 	}
 
 	removeByRoomIds(rids) {
-		return this.remove({ rid: { $in: rids } });
+		const result = this.remove({ rid: { $in: rids } });
+
+		Users.removeRoomByRoomIds(rids);
+
+		return result;
+	}
+
+	removeByRoomIdsAndUserId(rids, userId) {
+		const result = this.remove({ rid: { $in: rids }, 'u._id': userId });
+
+		if (Match.test(result, Number) && result > 0) {
+			Rooms.incUsersCountByIds(rids, -1);
+		}
+
+		Users.removeRoomsByRoomIdsAndUserId(rids, userId);
+
+		return result;
 	}
 
 	// //////////////////////////////////////////////////////////////////
 	// threads
 
-	addUnreadThreadByRoomIdAndUserIds(rid, users, tmid) {
+	addUnreadThreadByRoomIdAndUserIds(rid, users, tmid, { groupMention = false, userMention = false } = {}) {
 		if (!users) {
 			return;
 		}
+
 		return this.update({
 			'u._id': { $in: users },
 			rid,
 		}, {
 			$addToSet: {
 				tunread: tmid,
+				...groupMention && { tunreadGroup: tmid },
+				...userMention && { tunreadUser: tmid },
 			},
 		}, { multi: true });
 	}
 
-	removeUnreadThreadByRoomIdAndUserId(rid, userId, tmid) {
+	removeUnreadThreadByRoomIdAndUserId(rid, userId, tmid, clearAlert = false) {
+		const update = {
+			$pull: {
+				tunread: tmid,
+				tunreadGroup: tmid,
+				tunreadUser: tmid,
+			},
+		};
+
+		if (clearAlert) {
+			update.$set = { alert: false };
+		}
+
 		return this.update({
 			'u._id': userId,
 			rid,
-		}, {
-			$pull: {
-				tunread: tmid,
-			},
-		});
+		}, update);
 	}
 
 	removeAllUnreadThreadsByRoomIdAndUserId(rid, userId) {
@@ -1399,10 +1339,45 @@ export class Subscriptions extends Base {
 		const update = {
 			$unset: {
 				tunread: 1,
+				tunreadUser: 1,
+				tunreadGroup: 1,
 			},
 		};
 
 		return this.update(query, update);
+	}
+
+	removeUnreadThreadsByRoomId(rid, tunread) {
+		const query = {
+			rid,
+			tunread: { $in: tunread },
+		};
+
+		const update = {
+			$pullAll: {
+				tunread,
+				tunreadUser: tunread,
+				tunreadGroup: tunread,
+			},
+		};
+
+		return this.update(query, update, { multi: true });
+	}
+
+	setOnHold(roomId) {
+		return this.update(
+			{ rid: roomId },
+			{ $set: { onHold: true } },
+			{ multi: true },
+		);
+	}
+
+	unsetOnHold(roomId) {
+		return this.update(
+			{ rid: roomId },
+			{ $unset: { onHold: 1 } },
+			{ multi: true },
+		);
 	}
 }
 

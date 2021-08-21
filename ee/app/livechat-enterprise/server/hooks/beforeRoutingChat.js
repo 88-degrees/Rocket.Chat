@@ -1,7 +1,9 @@
 import { callbacks } from '../../../../../app/callbacks';
 import { settings } from '../../../../../app/settings';
 import { LivechatInquiry } from '../../../../../app/models/server';
-import { dispatchInquiryPosition, checkWaitingQueue } from '../lib/Helper';
+import { dispatchInquiryPosition } from '../lib/Helper';
+import { allowAgentSkipQueue } from '../../../../../app/livechat/server/lib/Helper';
+import { saveQueueInquiry } from '../../../../../app/livechat/server/lib/QueueManager';
 
 callbacks.add('livechat.beforeRouteChat', async (inquiry, agent) => {
 	if (!settings.get('Livechat_waiting_queue')) {
@@ -18,14 +20,16 @@ callbacks.add('livechat.beforeRouteChat', async (inquiry, agent) => {
 		return inquiry;
 	}
 
-	LivechatInquiry.queueInquiry(_id, agent);
+	if (agent && allowAgentSkipQueue(agent)) {
+		return inquiry;
+	}
 
-	const [inq] = await LivechatInquiry.getCurrentSortedQueueAsync({ _id });
+	saveQueueInquiry(inquiry);
+
+	const [inq] = await LivechatInquiry.getCurrentSortedQueueAsync({ _id, department });
 	if (inq) {
 		dispatchInquiryPosition(inq);
 	}
-
-	await checkWaitingQueue(department);
 
 	return LivechatInquiry.findOneById(_id);
 }, callbacks.priority.HIGH, 'livechat-before-routing-chat');

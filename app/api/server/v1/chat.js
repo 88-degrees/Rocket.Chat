@@ -128,7 +128,7 @@ API.v1.addRoute('chat.pinMessage', { authRequired: true }, {
 
 API.v1.addRoute('chat.postMessage', { authRequired: true }, {
 	post() {
-		const messageReturn = processWebhookMessage(this.bodyParams, this.user, undefined, true)[0];
+		const messageReturn = processWebhookMessage(this.bodyParams, this.user)[0];
 
 		if (!messageReturn) {
 			return API.v1.failure('unknown-error');
@@ -147,7 +147,7 @@ API.v1.addRoute('chat.postMessage', { authRequired: true }, {
 API.v1.addRoute('chat.search', { authRequired: true }, {
 	get() {
 		const { roomId, searchText } = this.queryParams;
-		const { count } = this.getPaginationItems();
+		const { offset, count } = this.getPaginationItems();
 
 		if (!roomId) {
 			throw new Meteor.Error('error-roomId-param-not-provided', 'The required "roomId" query param is missing.');
@@ -158,7 +158,7 @@ API.v1.addRoute('chat.search', { authRequired: true }, {
 		}
 
 		let result;
-		Meteor.runAsUser(this.userId, () => { result = Meteor.call('messageSearch', searchText, roomId, count).message.docs; });
+		Meteor.runAsUser(this.userId, () => { result = Meteor.call('messageSearch', searchText, roomId, count, offset).message.docs; });
 
 		return API.v1.success({
 			messages: normalizeMessagesForUser(result, this.userId),
@@ -445,6 +445,7 @@ API.v1.addRoute('chat.getThreadsList', { authRequired: true }, {
 		}
 
 		const typeThread = {
+			_hidden: { $ne: true },
 			...type === 'following' && { replies: { $in: [this.userId] } },
 			...type === 'unread' && { _id: { $in: Subscriptions.findOneByRoomIdAndUserId(room._id, user._id).tunread } },
 			...text && {
@@ -654,6 +655,9 @@ API.v1.addRoute('chat.getStarredMessages', { authRequired: true }, {
 				sort,
 			},
 		}));
+
+		messages.messages = normalizeMessagesForUser(messages.messages, this.userId);
+
 		return API.v1.success(messages);
 	},
 });
@@ -697,7 +701,7 @@ API.v1.addRoute('chat.getSnippetedMessages', { authRequired: true }, {
 
 API.v1.addRoute('chat.getDiscussions', { authRequired: true }, {
 	get() {
-		const { roomId } = this.queryParams;
+		const { roomId, text } = this.queryParams;
 		const { sort } = this.parseJsonQuery();
 		const { offset, count } = this.getPaginationItems();
 
@@ -707,6 +711,7 @@ API.v1.addRoute('chat.getDiscussions', { authRequired: true }, {
 		const messages = Promise.await(findDiscussionsFromRoom({
 			uid: this.userId,
 			roomId,
+			text,
 			pagination: {
 				offset,
 				count,

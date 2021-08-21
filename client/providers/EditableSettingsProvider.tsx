@@ -1,12 +1,16 @@
-import { useLazyRef, useMutableCallback } from '@rocket.chat/fuselage-hooks';
+import { useMutableCallback } from '@rocket.chat/fuselage-hooks';
 import { Mongo } from 'meteor/mongo';
 import { Tracker } from 'meteor/tracker';
-import React, { useEffect, useMemo, FunctionComponent, useCallback } from 'react';
+import React, { useEffect, useMemo, FunctionComponent, useRef, MutableRefObject } from 'react';
 
 import { SettingId, GroupId } from '../../definition/ISetting';
-import { EditableSettingsContext, IEditableSetting, EditableSettingsContextValue } from '../contexts/EditableSettingsContext';
+import {
+	EditableSettingsContext,
+	IEditableSetting,
+	EditableSettingsContextValue,
+} from '../contexts/EditableSettingsContext';
 import { useSettings, SettingsContextQuery } from '../contexts/SettingsContext';
-import { useReactiveSubscriptionFactory } from '../hooks/useReactiveSubscriptionFactory';
+import { createReactiveSubscriptionFactory } from './createReactiveSubscriptionFactory';
 
 const defaultQuery: SettingsContextQuery = {};
 
@@ -18,28 +22,38 @@ const EditableSettingsProvider: FunctionComponent<EditableSettingsProviderProps>
 	children,
 	query = defaultQuery,
 }) => {
-	const settingsCollectionRef = useLazyRef(() => new Mongo.Collection<any>(null));
+	const settingsCollectionRef = useRef<Mongo.Collection<IEditableSetting>>(
+		null,
+	) as MutableRefObject<Mongo.Collection<IEditableSetting>>;
 	const persistedSettings = useSettings(query);
 
-	useEffect(() => {
+	const getSettingsCollection = useMutableCallback(() => {
 		if (!settingsCollectionRef.current) {
-			return;
+			settingsCollectionRef.current = new Mongo.Collection<any>(null);
 		}
 
-		settingsCollectionRef.current.remove({ _id: { $nin: persistedSettings.map(({ _id }) => _id) } });
-		for (const setting of persistedSettings) {
-			settingsCollectionRef.current.upsert(setting._id, { ...setting });
-		}
-	}, [persistedSettings, settingsCollectionRef]);
+		return settingsCollectionRef.current;
+	}) as () => Mongo.Collection<IEditableSetting>;
 
-	const queryEditableSetting = useReactiveSubscriptionFactory(
-		useCallback(
-			(_id: SettingId): IEditableSetting | undefined => {
-				if (!settingsCollectionRef.current) {
-					return;
+	useEffect(() => {
+		const settingsCollection = getSettingsCollection();
+
+		settingsCollection.remove({ _id: { $nin: persistedSettings.map(({ _id }) => _id) } });
+		for (const { _id, ...fields } of persistedSettings) {
+			settingsCollection.upsert(_id, { $set: { ...fields }, $unset: { changed: true } });
+		}
+	}, [getSettingsCollection, persistedSettings]);
+
+	const queryEditableSetting = useMemo(
+		() =>
+			createReactiveSubscriptionFactory((_id: SettingId): IEditableSetting | undefined => {
+				const settingsCollection = getSettingsCollection();
+
+				const editableSetting = settingsCollection.findOne(_id);
+
+				if (!editableSetting) {
+					return undefined;
 				}
-
-				const editableSetting = settingsCollectionRef.current.findOne(_id);
 
 				if (editableSetting.blocked) {
 					return { ...editableSetting, disabled: true };
@@ -49,63 +63,75 @@ const EditableSettingsProvider: FunctionComponent<EditableSettingsProviderProps>
 					return { ...editableSetting, disabled: false };
 				}
 
-				const queries = [].concat(typeof editableSetting.enableQuery === 'string'
-					? JSON.parse(editableSetting.enableQuery)
-					: editableSetting.enableQuery);
+				const queries = [].concat(
+					typeof editableSetting.enableQuery === 'string'
+						? JSON.parse(editableSetting.enableQuery)
+						: editableSetting.enableQuery,
+				);
 				return {
 					...editableSetting,
-					disabled: !queries.every((query) => (settingsCollectionRef.current?.find(query)?.count() ?? 0) > 0),
+					disabled: !queries.every((query) => settingsCollection.find(query).count() > 0),
 				};
-			},
-			[settingsCollectionRef],
-		),
+			}),
+		[getSettingsCollection],
 	);
 
-	const queryEditableSettings = useReactiveSubscriptionFactory(
-		useCallback(
-			(query = {}) => settingsCollectionRef.current?.find({
-				...('_id' in query) && { _id: { $in: query._id } },
-				...('group' in query) && { group: query.group },
-				...('section' in query) && (
-					query.section
-						? { section: query.section }
-						: {
-							$or: [
-								{ section: { $exists: false } },
-								{ section: null },
-							],
-						}
+	const queryEditableSettings = useMemo(
+		() =>
+			createReactiveSubscriptionFactory((query = {}) =>
+				getSettingsCollection()
+					.find(
+						{
+							...('_id' in query && { _id: { $in: query._id } }),
+							...('group' in query && { group: query.group }),
+							...('section' in query &&
+								(query.section
+									? { section: query.section }
+									: {
+											$or: [{ section: { $exists: false } }, { section: '' }],
+									  })),
+							...('changed' in query && { changed: query.changed }),
+						},
+						{
+							sort: {
+								section: 1,
+								sorter: 1,
+								i18nLabel: 1,
+							},
+						},
+					)
+					.fetch(),
+			),
+		[getSettingsCollection],
+	);
+
+	const queryGroupSections = useMemo(
+		() =>
+			createReactiveSubscriptionFactory((_id: GroupId) =>
+				Array.from(
+					new Set(
+						getSettingsCollection()
+							.find(
+								{
+									group: _id,
+								},
+								{
+									fields: {
+										section: 1,
+									},
+									sort: {
+										section: 1,
+										sorter: 1,
+										i18nLabel: 1,
+									},
+								},
+							)
+							.fetch()
+							.map(({ section }) => section || ''),
+					),
 				),
-				...('changed' in query) && { changed: query.changed },
-			}, {
-				sort: {
-					section: 1,
-					sorter: 1,
-					i18nLabel: 1,
-				},
-			}).fetch() ?? [],
-			[settingsCollectionRef],
-		),
-	);
-
-	const queryGroupSections = useReactiveSubscriptionFactory(
-		useCallback(
-			(_id: GroupId) => Array.from(new Set(
-				(settingsCollectionRef.current?.find({
-					group: _id,
-				}, {
-					fields: {
-						section: 1,
-					},
-					sort: {
-						section: 1,
-						sorter: 1,
-						i18nLabel: 1,
-					},
-				}).fetch() ?? []).map(({ section }) => section),
-			)),
-			[settingsCollectionRef],
-		),
+			),
+		[getSettingsCollection],
 	);
 
 	const dispatch = useMutableCallback((changes: Partial<IEditableSetting>[]): void => {
@@ -114,22 +140,20 @@ const EditableSettingsProvider: FunctionComponent<EditableSettingsProviderProps>
 				continue;
 			}
 
-			settingsCollectionRef.current?.update(_id, { $set: data });
+			getSettingsCollection().update(_id, { $set: data });
 		}
 		Tracker.flush();
 	});
 
-	const contextValue = useMemo<EditableSettingsContextValue>(() => ({
-		queryEditableSetting,
-		queryEditableSettings,
-		queryGroupSections,
-		dispatch,
-	}), [
-		queryEditableSetting,
-		queryEditableSettings,
-		queryGroupSections,
-		dispatch,
-	]);
+	const contextValue = useMemo<EditableSettingsContextValue>(
+		() => ({
+			queryEditableSetting,
+			queryEditableSettings,
+			queryGroupSections,
+			dispatch,
+		}),
+		[queryEditableSetting, queryEditableSettings, queryGroupSections, dispatch],
+	);
 
 	return <EditableSettingsContext.Provider children={children} value={contextValue} />;
 };

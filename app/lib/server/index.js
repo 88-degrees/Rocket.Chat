@@ -6,7 +6,6 @@ import './startup/settings';
 import './startup/settingsOnLoadCdnPrefix';
 import './startup/settingsOnLoadDirectReply';
 import './startup/settingsOnLoadSMTP';
-import './startup/userDataStream';
 import '../lib/MessageTypes';
 import '../startup';
 import '../startup/defaultRoomTypes';
@@ -66,6 +65,7 @@ import './methods/setUsername';
 import './methods/unarchiveRoom';
 import './methods/unblockUser';
 import './methods/updateMessage';
+import './methods/saveCustomFields';
 
 export * from './lib';
 export * from './functions';

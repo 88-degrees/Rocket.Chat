@@ -1,8 +1,6 @@
 import { Meteor } from 'meteor/meteor';
-import { Match, check } from 'meteor/check';
 import moment from 'moment';
 
-import { hasRole } from '../../../../../app/authorization';
 import {
 	LivechatDepartment,
 	Users,
@@ -13,22 +11,23 @@ import {
 } from '../../../../../app/models/server';
 import { Rooms as RoomRaw } from '../../../../../app/models/server/raw';
 import { settings } from '../../../../../app/settings';
-import { Livechat } from '../../../../../app/livechat/server/lib/Livechat';
 import { RoutingManager } from '../../../../../app/livechat/server/lib/RoutingManager';
 import { dispatchAgentDelegated } from '../../../../../app/livechat/server/lib/Helper';
+import notifications from '../../../../../app/notifications/server/lib/Notifications';
+import { logger } from './logger';
 
 export const getMaxNumberSimultaneousChat = ({ agentId, departmentId }) => {
-	if (agentId) {
-		const user = Users.getAgentInfo(agentId);
-		const { livechat: { maxNumberSimultaneousChat } = {} } = user || {};
+	if (departmentId) {
+		const department = LivechatDepartment.findOneById(departmentId);
+		const { maxNumberSimultaneousChat } = department || {};
 		if (maxNumberSimultaneousChat > 0) {
 			return maxNumberSimultaneousChat;
 		}
 	}
 
-	if (departmentId) {
-		const department = LivechatDepartment.findOneById(departmentId);
-		const { maxNumberSimultaneousChat } = department || {};
+	if (agentId) {
+		const user = Users.getAgentInfo(agentId);
+		const { livechat: { maxNumberSimultaneousChat } = {} } = user || {};
 		if (maxNumberSimultaneousChat > 0) {
 			return maxNumberSimultaneousChat;
 		}
@@ -82,7 +81,7 @@ export const dispatchInquiryPosition = async (inquiry, queueInfo) => {
 	const { position, department } = inquiry;
 	const data = await normalizeQueueInfo({ position, queueInfo, department });
 	const propagateInquiryPosition = Meteor.bindEnvironment((inquiry) => {
-		Livechat.stream.emit(inquiry.rid, {
+		notifications.streamLivechatRoom.emit(inquiry.rid, {
 			type: 'queueData',
 			data,
 		});
@@ -94,6 +93,7 @@ export const dispatchInquiryPosition = async (inquiry, queueInfo) => {
 };
 
 export const dispatchWaitingQueueStatus = async (department) => {
+	logger.helper.debug(`Updating statuses for queue ${ department || 'Public' }`);
 	const queue = await LivechatInquiry.getCurrentSortedQueueAsync({ department });
 	const queueInfo = await getQueueInfo(department);
 	queue.forEach((inquiry) => {
@@ -101,12 +101,16 @@ export const dispatchWaitingQueueStatus = async (department) => {
 	});
 };
 
-const processWaitingQueue = async (department) => {
+export const processWaitingQueue = async (department) => {
+	const queue = department || 'Public';
+	logger.helper.debug(`Processing items on queue ${ queue }`);
 	const inquiry = LivechatInquiry.getNextInquiryQueued(department);
 	if (!inquiry) {
+		logger.helper.debug(`No items to process on queue ${ queue }`);
 		return;
 	}
 
+	logger.helper.debug(`Processing inquiry ${ inquiry._id } from queue ${ queue }`);
 	const { defaultAgent } = inquiry;
 	const room = await RoutingManager.delegateInquiry(inquiry, defaultAgent);
 
@@ -116,7 +120,7 @@ const processWaitingQueue = async (department) => {
 
 	if (room && room.servedBy) {
 		const { _id: rid, servedBy: { _id: agentId } } = room;
-
+		logger.helper.debug(`Inquiry ${ inquiry._id } taken succesfully by agent ${ agentId }. Notifying`);
 		return setTimeout(() => {
 			propagateAgentDelegated(rid, agentId);
 		}, 1000);
@@ -126,29 +130,8 @@ const processWaitingQueue = async (department) => {
 	await dispatchWaitingQueueStatus(departmentId);
 };
 
-export const checkWaitingQueue = async (department) => {
-	if (!settings.get('Livechat_waiting_queue')) {
-		return;
-	}
-
-	const departments = (department && [department]) || LivechatDepartment.findEnabledWithAgents().fetch().map((department) => department._id);
-	if (departments.length === 0) {
-		return processWaitingQueue();
-	}
-
-	return Promise.all(departments.map(async (department) => processWaitingQueue(department)));
-};
-
-export const allowAgentSkipQueue = (agent) => {
-	check(agent, Match.ObjectIncluding({
-		agentId: String,
-	}));
-
-	return settings.get('Livechat_assign_new_conversation_to_bot') && hasRole(agent.agentId, 'bot');
-};
-
 export const setPredictedVisitorAbandonmentTime = (room) => {
-	if (!room.v || !room.v.lastMessageTs || !settings.get('Livechat_auto_close_abandoned_rooms')) {
+	if (!room.v || !room.v.lastMessageTs || !settings.get('Livechat_abandoned_rooms_action') || settings.get('Livechat_abandoned_rooms_action') === 'none') {
 		return;
 	}
 
@@ -168,11 +151,26 @@ export const setPredictedVisitorAbandonmentTime = (room) => {
 };
 
 export const updatePredictedVisitorAbandonment = () => {
-	if (settings.get('Livechat_auto_close_abandoned_rooms')) {
-		LivechatRooms.findLivechat({ open: true }).forEach((room) => setPredictedVisitorAbandonmentTime(room));
-	} else {
+	if (!settings.get('Livechat_abandoned_rooms_action') || (settings.get('Livechat_abandoned_rooms_action') === 'none')) {
 		LivechatRooms.unsetPredictedVisitorAbandonment();
+	} else {
+		LivechatRooms.findLivechat({ open: true }).forEach((room) => setPredictedVisitorAbandonmentTime(room));
 	}
+};
+
+export const updateQueueInactivityTimeout = () => {
+	const queueAction = settings.get('Livechat_max_queue_wait_time_action');
+	const queueTimeout = settings.get('Livechat_max_queue_wait_time');
+	if (!queueAction || queueAction === 'Nothing') {
+		logger.debug('QueueInactivityTimer: No action performed (disabled by setting)');
+		return LivechatInquiry.unsetEstimatedInactivityCloseTime();
+	}
+
+	logger.debug('QueueInactivityTimer: Updating estimated inactivity time for queued items');
+	LivechatInquiry.getQueuedInquiries().forEach((inq) => {
+		const aggregatedDate = moment(inq._updatedAt).add(queueTimeout, 'minutes');
+		return LivechatInquiry.setEstimatedInactivityCloseTime(inq._id, aggregatedDate);
+	});
 };
 
 export const updateRoomPriorityHistory = (rid, user, priority) => {
@@ -239,7 +237,7 @@ export const getLivechatQueueInfo = async (room) => {
 		return null;
 	}
 
-	const { _id: rid } = room;
+	const { _id: rid, departmentId: department } = room;
 	const inquiry = LivechatInquiry.findOneByRoomId(rid, { fields: { _id: 1, status: 1 } });
 	if (!inquiry) {
 		return null;
@@ -250,7 +248,7 @@ export const getLivechatQueueInfo = async (room) => {
 		return null;
 	}
 
-	const [inq] = await LivechatInquiry.getCurrentSortedQueueAsync({ _id });
+	const [inq] = await LivechatInquiry.getCurrentSortedQueueAsync({ _id, department });
 
 	if (!inq) {
 		return null;

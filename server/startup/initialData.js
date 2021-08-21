@@ -31,13 +31,16 @@ Meteor.startup(function() {
 
 			addUserRoles('rocket.cat', 'bot');
 
-			const rs = RocketChatFile.bufferToStream(new Buffer(Assets.getBinary('avatars/rocketcat.png'), 'utf8'));
+			const buffer = Buffer.from(Assets.getBinary('avatars/rocketcat.png'));
+
+			const rs = RocketChatFile.bufferToStream(buffer, 'utf8');
 			const fileStore = FileUpload.getStore('Avatars');
 			fileStore.deleteByName('rocket.cat');
 
 			const file = {
 				userId: 'rocket.cat',
 				type: 'image/png',
+				size: buffer.length,
 			};
 
 			Meteor.runAsUser('rocket.cat', () => {
@@ -86,7 +89,7 @@ Meteor.startup(function() {
 					let nameValidation;
 
 					try {
-						nameValidation = new RegExp(`^${ settings.get('UTF8_Names_Validation') }$`);
+						nameValidation = new RegExp(`^${ settings.get('UTF8_User_Names_Validation') }$`);
 					} catch (error) {
 						nameValidation = new RegExp('^[0-9a-zA-Z-_.]+$');
 					}

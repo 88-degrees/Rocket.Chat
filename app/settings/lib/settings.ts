@@ -1,9 +1,8 @@
 import { Meteor } from 'meteor/meteor';
 import _ from 'underscore';
 
-export type SettingValueMultiSelect = Array<{key: string; i18nLabel: string}>
-export type SettingValueRoomPick = Array<{_id: string; name: string}> | string
-export type SettingValue = string | boolean | number | SettingValueMultiSelect | undefined;
+import { SettingValue } from '../../../definition/ISetting';
+
 export type SettingComposedValue = {key: string; value: SettingValue};
 export type SettingCallback = (key: string, value: SettingValue, initialLoad?: boolean) => void;
 
@@ -18,6 +17,9 @@ export class SettingsBase {
 	private regexCallbacks = new Map<string, ISettingRegexCallbacks>();
 
 	// private ts = new Date()
+	public get(_id: RegExp, callback?: SettingCallback): SettingComposedValue[];
+
+	public get(_id: string, callback?: SettingCallback): SettingValue | void;
 
 	public get(_id: string | RegExp, callback?: SettingCallback): SettingValue | SettingComposedValue[] | void {
 		if (callback != null) {

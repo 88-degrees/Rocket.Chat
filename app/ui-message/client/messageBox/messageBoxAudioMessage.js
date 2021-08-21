@@ -1,9 +1,8 @@
 import { ReactiveVar } from 'meteor/reactive-var';
 import { Template } from 'meteor/templating';
 
-import { uploadFileWithMessage } from '../../../ui/client/lib/fileUpload';
 import { settings } from '../../../settings';
-import { AudioRecorder } from '../../../ui';
+import { AudioRecorder, fileUpload } from '../../../ui';
 import { t } from '../../../utils';
 import './messageBoxAudioMessage.html';
 
@@ -14,6 +13,20 @@ const stopRecording = () => new Promise((resolve) => AudioRecorder.stop(resolve)
 
 const recordingInterval = new ReactiveVar(null);
 const recordingRoomId = new ReactiveVar(null);
+
+const cancelRecording = (instance) => new Promise(async () => {
+	if (recordingInterval.get()) {
+		clearInterval(recordingInterval.get());
+		recordingInterval.set(null);
+		recordingRoomId.set(null);
+	}
+
+	instance.time.set('00:00');
+
+	await stopRecording();
+
+	instance.state.set(null);
+});
 
 Template.messageBoxAudioMessage.onCreated(async function() {
 	this.state = new ReactiveVar(null);
@@ -45,6 +58,12 @@ Template.messageBoxAudioMessage.onCreated(async function() {
 		}
 	} catch (error) {
 		console.warn(error);
+	}
+});
+
+Template.messageBoxAudioMessage.onDestroyed(async function() {
+	if (this.state.get() === 'recording') {
+		await cancelRecording(this);
 	}
 });
 
@@ -106,17 +125,7 @@ Template.messageBoxAudioMessage.events({
 	async 'click .js-audio-message-cancel'(event, instance) {
 		event.preventDefault();
 
-		if (recordingInterval.get()) {
-			clearInterval(recordingInterval.get());
-			recordingInterval.set(null);
-			recordingRoomId.set(null);
-		}
-
-		instance.time.set('00:00');
-
-		await stopRecording();
-
-		instance.state.set(null);
+		await cancelRecording(instance);
 	},
 
 	async 'click .js-audio-message-done'(event, instance) {
@@ -137,7 +146,6 @@ Template.messageBoxAudioMessage.events({
 		instance.state.set(null);
 
 		const { rid, tmid } = this;
-
-		await uploadFileWithMessage(rid, tmid, { file: { file: blob }, fileName: `${ t('Audio record') }.mp3` });
+		await fileUpload([{ file: blob, type: 'video', name: `${ t('Audio record') }.mp3` }], { input: blob }, { rid, tmid });
 	},
 });

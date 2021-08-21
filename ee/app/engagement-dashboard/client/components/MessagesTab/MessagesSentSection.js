@@ -1,5 +1,5 @@
 import { ResponsiveBar } from '@nivo/bar';
-import { Box, Flex, Select, Skeleton } from '@rocket.chat/fuselage';
+import { Box, Flex, Select, Skeleton, ActionButton } from '@rocket.chat/fuselage';
 import moment from 'moment';
 import React, { useMemo, useState } from 'react';
 
@@ -7,13 +7,9 @@ import { useTranslation } from '../../../../../../client/contexts/TranslationCon
 import { useEndpointData } from '../../../../../../client/hooks/useEndpointData';
 import CounterSet from '../../../../../../client/components/data/CounterSet';
 import { Section } from '../Section';
-import { ActionButton } from '../../../../../../client/components/basic/Buttons/ActionButton';
-import { saveFile } from '../../../../../../client/lib/saveFile';
+import { downloadCsvAs } from '../../../../../../client/lib/download';
 
-const convertDataToCSV = (data) => `// date, newMessages
-${ data.map(({ date, newMessages }) => `${ date }, ${ newMessages }`).join('\n') }`;
-
-export function MessagesSentSection() {
+const MessagesSentSection = () => {
 	const t = useTranslation();
 
 	const periodOptions = useMemo(() => [
@@ -53,7 +49,7 @@ export function MessagesSentSection() {
 		end: period.end.toISOString(),
 	}), [period]);
 
-	const data = useEndpointData('engagement-dashboard/messages/messages-sent', params);
+	const { value: data } = useEndpointData('engagement-dashboard/messages/messages-sent', params);
 
 	const [
 		countFromPeriod,
@@ -87,12 +83,13 @@ export function MessagesSentSection() {
 	}, [data, period]);
 
 	const downloadData = () => {
-		saveFile(convertDataToCSV(values), `MessagesSentSection_start_${ params.start }_end_${ params.end }.csv`);
+		const data = values.map(({ date, newMessages }) => [date, newMessages]);
+		downloadCsvAs(data, `MessagesSentSection_start_${ params.start }_end_${ params.end }`);
 	};
 
 	return <Section
 		title={t('Messages_sent')}
-		filter={<><Select options={periodOptions} value={periodId} onChange={handlePeriodChange} /><ActionButton mis='x16' disabled={!data} onClick={downloadData} aria-label={t('Download_Info')} icon='download'/></>}
+		filter={<><Select options={periodOptions} value={periodId} onChange={handlePeriodChange} /><ActionButton small mis='x16' disabled={!data} onClick={downloadData} aria-label={t('Download_Info')} icon='download'/></>}
 	>
 		<CounterSet
 			counters={[
@@ -113,7 +110,11 @@ export function MessagesSentSection() {
 				? <Box style={{ height: 240 }}>
 					<Flex.Item align='stretch' grow={1} shrink={0}>
 						<Box style={{ position: 'relative' }}>
-							<Box style={{ position: 'absolute', width: '100%', height: '100%' }}>
+							<Box style={{
+								position: 'absolute',
+								width: '100%',
+								height: '100%',
+							}}>
 								<ResponsiveBar
 									data={values}
 									indexBy='date'
@@ -177,4 +178,6 @@ export function MessagesSentSection() {
 				: <Skeleton variant='rect' height={240} />}
 		</Flex.Container>
 	</Section>;
-}
+};
+
+export default MessagesSentSection;

@@ -9,7 +9,7 @@
 						{{> loading}}
 					</li>
 				{{else}}
-						{{> message groupable=false hideRoles=true msg=mainMessage room=room subscription=subscription settings=settings customClass="thread-message" templatePrefix='thread-' customClass="thread-main" u=u ignored=false}}
+						{{> message groupable=false hideRoles=true msg=mainMessage room=room subscription=subscription settings=settings customClass="thread-message" templatePrefix='thread-' customClass="thread-main" u=u ignored=false shouldCollapseReplies=true}}
 						{{#each msg in messages}}
 							{{> message hideRoles=true msg=msg room=room shouldCollapseReplies=true subscription=subscription settings=settings templatePrefix='thread-' u=u context="threads"}}
 						{{/each}}
@@ -20,7 +20,9 @@
 		{{> messageBox messageBoxData}}
 		<footer class="thread-footer">
 			{{# with checkboxData }}
-				{{> Checkbox }}
+				<div style="display: flex;">
+					{{> Checkbox . }}
+				</div>
 			{{/with}}
 			<label for="sendAlso" class="thread-footer__text">{{ _ "Also_send_to_channel" }}</label>
 		</footer>

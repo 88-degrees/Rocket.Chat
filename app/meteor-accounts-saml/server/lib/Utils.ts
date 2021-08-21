@@ -10,7 +10,7 @@ import { StatusCode } from './constants';
 
 // @ToDo remove this ts-ignore someday
 // @ts-ignore skip checking if Logger exists to avoid having to import the Logger class here (it would bring a lot of baggage with its dependencies, affecting the unit tests)
-type NullableLogger = Logger | Null;
+type NullableLogger = Logger | null;
 
 let providerList: Array<IServiceProviderOptions> = [];
 let debug = false;
@@ -27,6 +27,8 @@ const globalSettings: ISAMLGlobalSettings = {
 	roleAttributeSync: false,
 	userDataFieldMap: '{"username":"username", "email":"email", "cn": "name"}',
 	usernameNormalize: 'None',
+	channelsAttributeUpdate: false,
+	includePrivateChannelsInUpdate: false,
 };
 
 export class SAMLUtils {
@@ -73,6 +75,8 @@ export class SAMLUtils {
 		globalSettings.nameOverwrite = Boolean(samlConfigs.nameOverwrite);
 		globalSettings.mailOverwrite = Boolean(samlConfigs.mailOverwrite);
 		globalSettings.roleAttributeSync = Boolean(samlConfigs.roleAttributeSync);
+		globalSettings.channelsAttributeUpdate = Boolean(samlConfigs.channelsAttributeUpdate);
+		globalSettings.includePrivateChannelsInUpdate = Boolean(samlConfigs.includePrivateChannelsInUpdate);
 
 		if (samlConfigs.immutableProperty && typeof samlConfigs.immutableProperty === 'string') {
 			globalSettings.immutableProperty = samlConfigs.immutableProperty;
@@ -148,7 +152,7 @@ export class SAMLUtils {
 	}
 
 	public static inflateXml(base64Data: string, successCallback: (xml: string) => void, errorCallback: (err: string | object | null) => void): void {
-		const buffer = new Buffer(base64Data, 'base64');
+		const buffer = Buffer.from(base64Data, 'base64');
 		zlib.inflateRaw(buffer, (err, decoded) => {
 			if (err) {
 				this.log(`Error while inflating. ${ err }`);
@@ -326,7 +330,7 @@ export class SAMLUtils {
 		return parsedMap;
 	}
 
-	public static getProfileValue(profile: Record<string, any>, mapping: IAttributeMapping): any {
+	public static getProfileValue(profile: Record<string, any>, mapping: IAttributeMapping, forceString = false): any {
 		const values: Record<string, string> = {
 			regex: '',
 		};
@@ -334,10 +338,26 @@ export class SAMLUtils {
 
 		let mainValue;
 		for (const fieldName of fieldNames) {
-			values[fieldName] = profile[fieldName];
+			let profileValue = profile[fieldName];
+
+			if (Array.isArray(profileValue)) {
+				for (let i = 0; i < profile[fieldName].length; i++) {
+					// Add every index to the list of possible values to be used, both first to last and from last to first
+					values[`${ fieldName }[${ i }]`] = profileValue[i];
+					values[`${ fieldName }[-${ Math.abs(0 - profileValue.length + i) }]`] = profileValue[i];
+				}
+				values[`${ fieldName }[]`] = profileValue.join(' ');
+				if (forceString) {
+					profileValue = profileValue.join(' ');
+				}
+			} else {
+				values[fieldName] = profileValue;
+			}
+
+			values[fieldName] = profileValue;
 
 			if (!mainValue) {
-				mainValue = profile[fieldName];
+				mainValue = profileValue;
 			}
 		}
 
@@ -377,7 +397,7 @@ export class SAMLUtils {
 		return mainValue;
 	}
 
-	public static convertArrayBufferToString(buffer: ArrayBuffer, encoding = 'utf8'): string {
+	public static convertArrayBufferToString(buffer: ArrayBuffer, encoding: BufferEncoding = 'utf8'): string {
 		return Buffer.from(buffer).toString(encoding);
 	}
 
@@ -422,7 +442,7 @@ export class SAMLUtils {
 		}
 
 		const email = this.getProfileValue(profile, userDataMap.email);
-		const profileUsername = this.getProfileValue(profile, userDataMap.username);
+		const profileUsername = this.getProfileValue(profile, userDataMap.username, true);
 		const name = this.getProfileValue(profile, userDataMap.name);
 
 		// Even if we're not using the email to identify the user, it is still mandatory because it's a mandatory information on Rocket.Chat
@@ -451,7 +471,12 @@ export class SAMLUtils {
 		}
 
 		if (roleAttributeName && profile[roleAttributeName]) {
-			userObject.roles = this.ensureArray<string>((profile[roleAttributeName] || '').split(','));
+			let value = profile[roleAttributeName] || '';
+			if (typeof value === 'string') {
+				value = value.split(',');
+			}
+
+			userObject.roles = this.ensureArray<string>(value);
 		}
 
 		if (profile.language) {

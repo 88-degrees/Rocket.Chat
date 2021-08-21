@@ -1,5 +1,6 @@
 import { ResponsiveBar } from '@nivo/bar';
 import { Box, Button, Chevron, Flex, Margins, Select, Skeleton } from '@rocket.chat/fuselage';
+import { useBreakpoints } from '@rocket.chat/fuselage-hooks';
 import moment from 'moment';
 import React, { useMemo, useState } from 'react';
 
@@ -7,14 +8,20 @@ import { useTranslation } from '../../../../../../client/contexts/TranslationCon
 import { useEndpointData } from '../../../../../../client/hooks/useEndpointData';
 import { Section } from '../Section';
 
-function ContentForHours({ displacement, onPreviousDateClick, onNextDateClick }) {
+const ContentForHours = ({ displacement, onPreviousDateClick, onNextDateClick, timezone }) => {
 	const t = useTranslation();
+	const isLgScreen = useBreakpoints().includes('lg');
+	const utc = timezone === 'utc';
 
-	const currentDate = useMemo(() =>
-		moment().set({ hour: 0, minute: 0, second: 0, millisecond: 0 })
-			.subtract(1).subtract(displacement, 'days'), [displacement]);
+	const currentDate = useMemo(() => {
+		if (utc) {
+			return moment().utc({ hour: 0, minute: 0, second: 0, millisecond: 0 }).subtract(1, 'days').subtract(displacement, 'days');
+		}
+		return moment().set({ hour: 0, minute: 0, second: 0, millisecond: 0 }).subtract(1).subtract(displacement, 'days');
+	}, [displacement, utc]);
+
 	const params = useMemo(() => ({ start: currentDate.toISOString() }), [currentDate]);
-	const data = useEndpointData('engagement-dashboard/users/chat-busier/hourly-data', params);
+	const { value: data } = useEndpointData('engagement-dashboard/users/chat-busier/hourly-data', useMemo(() => params, [params]));
 	const values = useMemo(() => {
 		if (!data) {
 			return [];
@@ -58,7 +65,8 @@ function ContentForHours({ displacement, onPreviousDateClick, onNextDateClick })
 							padding={0.25}
 							margin={{
 								// TODO: Get it from theme
-								bottom: 20,
+								bottom: 30,
+								right: 5,
 							}}
 							colors={[
 								// TODO: Get it from theme
@@ -72,7 +80,7 @@ function ContentForHours({ displacement, onPreviousDateClick, onNextDateClick })
 								tickSize: 0,
 								// TODO: Get it from theme
 								tickPadding: 4,
-								tickRotation: 0,
+								tickRotation: isLgScreen ? 0 : 25,
 								tickValues: 'every 2 hours',
 								format: (hour) => moment().set({ hour, minute: 0, second: 0 }).format('LT'),
 							}}
@@ -96,11 +104,10 @@ function ContentForHours({ displacement, onPreviousDateClick, onNextDateClick })
 									},
 								},
 								tooltip: {
-									container: {
-										backgroundColor: '#1F2329',
-										boxShadow: '0px 0px 12px rgba(47, 52, 61, 0.12), 0px 0px 2px rgba(47, 52, 61, 0.08)',
-										borderRadius: 2,
-									},
+									backgroundColor: '#1F2329',
+									boxShadow: '0px 0px 12px rgba(47, 52, 61, 0.12), 0px 0px 2px rgba(47, 52, 61, 0.08)',
+									borderRadius: 2,
+									padding: 4,
 								},
 							}}
 							tooltip={({ value }) => <Box fontScale='p2' color='alternative'>
@@ -112,19 +119,25 @@ function ContentForHours({ displacement, onPreviousDateClick, onNextDateClick })
 			</Box>
 			: <Skeleton variant='rect' height={196} />}
 	</>;
-}
+};
 
-function ContentForDays({ displacement, onPreviousDateClick, onNextDateClick }) {
-	const currentDate = useMemo(() => moment.utc().subtract(displacement, 'weeks'), [displacement]);
+const ContentForDays = ({ displacement, onPreviousDateClick, onNextDateClick, timezone }) => {
+	const utc = timezone === 'utc';
+	const currentDate = useMemo(() => {
+		if (utc) {
+			return moment.utc().subtract(displacement, 'weeks');
+		}
+		return moment().subtract(displacement, 'weeks');
+	}, [displacement, utc]);
 	const formattedCurrentDate = useMemo(() => {
 		const startOfWeekDate = currentDate.clone().subtract(6, 'days');
 		return `${ startOfWeekDate.format('L') } - ${ currentDate.format('L') }`;
 	}, [currentDate]);
 	const params = useMemo(() => ({ start: currentDate.toISOString() }), [currentDate]);
-	const data = useEndpointData('engagement-dashboard/users/chat-busier/weekly-data', params);
+	const { value: data } = useEndpointData('engagement-dashboard/users/chat-busier/weekly-data', useMemo(() => params, [params]));
 	const values = useMemo(() => (data ? data.month.map(({ users, day, month, year }) => ({
 		users,
-		day: String(moment.utc([year, month - 1, day, 0, 0, 0]).valueOf()),
+		day: String(moment({ year, month: month - 1, day }).valueOf()),
 	})).sort(({ day: a }, { day: b }) => a - b) : []), [data]);
 
 	return <>
@@ -150,7 +163,11 @@ function ContentForDays({ displacement, onPreviousDateClick, onNextDateClick }) 
 				? <Box style={{ height: 196 }}>
 					<Flex.Item align='stretch' grow={1} shrink={0}>
 						<Box style={{ position: 'relative' }}>
-							<Box style={{ position: 'absolute', width: '100%', height: '100%' }}>
+							<Box style={{
+								position: 'absolute',
+								width: '100%',
+								height: '100%',
+							}}>
 								<ResponsiveBar
 									data={values}
 									indexBy='day'
@@ -205,9 +222,9 @@ function ContentForDays({ displacement, onPreviousDateClick, onNextDateClick }) 
 				: <Skeleton variant='rect' height={196} />}
 		</Flex.Container>
 	</>;
-}
+};
 
-export function BusiestChatTimesSection() {
+const BusiestChatTimesSection = ({ timezone }) => {
 	const t = useTranslation();
 
 	const [timeUnit, setTimeUnit] = useState('hours');
@@ -236,6 +253,9 @@ export function BusiestChatTimesSection() {
 			displacement={displacement}
 			onPreviousDateClick={handlePreviousDateClick}
 			onNextDateClick={handleNextDateClick}
+			timezone={timezone}
 		/>
 	</Section>;
-}
+};
+
+export default BusiestChatTimesSection;

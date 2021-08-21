@@ -5,7 +5,7 @@ import s from 'underscore.string';
 
 import { Users } from '../../app/models';
 import { settings } from '../../app/settings';
-import { saveCustomFields, validateEmailDomain, passwordPolicy } from '../../app/lib';
+import { validateEmailDomain, passwordPolicy } from '../../app/lib';
 import { validateInviteToken } from '../../app/invites/server/functions/validateInviteToken';
 
 Meteor.methods({
@@ -18,6 +18,7 @@ Meteor.methods({
 				globalRoles: [
 					'anonymous',
 				],
+				active: true,
 			});
 
 			const stampedLoginToken = Accounts._generateStampedLoginToken();
@@ -77,8 +78,6 @@ Meteor.methods({
 		if (manuallyApproveNewUsers && reason) {
 			Users.setReason(userId, reason);
 		}
-
-		saveCustomFields(userId, formData);
 
 		try {
 			Accounts.sendVerificationEmail(userId, userData.email);
