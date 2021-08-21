@@ -55,7 +55,7 @@
 		"@rocket.chat/eslint-config": "^0.4.0",
 		"@rocket.chat/livechat": "^1.9.4",
 		"@settlin/spacebars-loader": "^1.0.9",
-		"@storybook/addon-essentials": "^6.3.6",
+		"@storybook/addon-essentials": "^6.3.7",
 		"@storybook/addon-postcss": "^2.0.0",
 		"@storybook/addons": "^6.3.6",
 		"@storybook/react": "^6.3.6",
