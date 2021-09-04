@@ -244,7 +244,7 @@
 		"lodash.get": "^4.4.2",
 		"lodash.property": "^4.4.2",
 		"lru-cache": "^5.1.1",
-		"mailparser": "^3.2.0",
+		"mailparser": "^3.3.0",
 		"marked": "^0.7.0",
 		"mem": "^6.1.1",
 		"memoize-one": "^5.2.1",
