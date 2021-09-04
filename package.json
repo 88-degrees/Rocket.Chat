@@ -67,7 +67,7 @@
 		"@types/agenda": "^2.0.9",
 		"@types/bad-words": "^3.0.1",
 		"@types/bcrypt": "^5.0.0",
-		"@types/body-parser": "^1.19.0",
+		"@types/body-parser": "^1.19.1",
 		"@types/chai": "^4.2.19",
 		"@types/chai-spies": "^1.0.3",
 		"@types/clipboard": "^2.0.1",
