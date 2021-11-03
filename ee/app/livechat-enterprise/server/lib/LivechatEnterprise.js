@@ -249,18 +249,27 @@ const queueWorker = {
 
 	async checkQueue(queue) {
 		queueLogger.debug(`Processing items for queue ${ queue || 'Public' }`);
-		if (await OmnichannelQueue.lockQueue()) {
-			await processWaitingQueue(queue);
-			queueLogger.debug(`Queue ${ queue || 'Public' } processed. Unlocking`);
-			await OmnichannelQueue.unlockQueue();
+		try {
+			if (await OmnichannelQueue.lockQueue()) {
+				await processWaitingQueue(queue);
+				queueLogger.debug(`Queue ${ queue || 'Public' } processed. Unlocking`);
+				await OmnichannelQueue.unlockQueue();
+			} else {
+				queueLogger.debug('Queue locked. Waiting');
+			}
+		} catch (e) {
+			queueLogger.error({
+				msg: `Error processing queue ${ queue || 'public' }`,
+				err: e,
+			});
+		} finally {
+			this.execute();
 		}
-
-		this.execute();
 	},
 };
 
-let omnichannelIsEnabled = false;
 
+let omnichannelIsEnabled = false;
 function shouldQueueStart() {
 	if (!omnichannelIsEnabled) {
 		queueWorker.stop();
@@ -279,7 +288,7 @@ function shouldQueueStart() {
 
 RoutingManager.startQueue = shouldQueueStart;
 
-settings.get('Livechat_enabled', (_, value) => {
-	omnichannelIsEnabled = value;
+settings.watch('Livechat_enabled', (enabled) => {
+	omnichannelIsEnabled = enabled;
 	omnichannelIsEnabled && RoutingManager.isMethodSet() ? shouldQueueStart() : queueWorker.stop();
 });
