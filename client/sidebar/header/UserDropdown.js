@@ -3,8 +3,8 @@ import { useMutableCallback } from '@rocket.chat/fuselage-hooks';
 import { FlowRouter } from 'meteor/kadira:flow-router';
 import React from 'react';
 
-import { callbacks } from '../../../app/callbacks/client';
-import { popover, AccountBox, modal, SideNav } from '../../../app/ui-utils/client';
+import { callbacks } from '../../../app/callbacks/lib/callbacks';
+import { popover, AccountBox, SideNav } from '../../../app/ui-utils/client';
 import { userStatus } from '../../../app/user-status/client';
 import MarkdownText from '../../components/MarkdownText';
 import { UserStatus } from '../../components/UserStatus';
@@ -16,6 +16,8 @@ import { useSetting } from '../../contexts/SettingsContext';
 import { useTranslation } from '../../contexts/TranslationContext';
 import { useLogout } from '../../contexts/UserContext';
 import { useReactiveValue } from '../../hooks/useReactiveValue';
+import { imperativeModal } from '../../lib/imperativeModal';
+import EditStatusModal from './EditStatusModal';
 
 const ADMIN_PERMISSIONS = [
 	'view-logs',
@@ -32,6 +34,7 @@ const ADMIN_PERMISSIONS = [
 	'manage-incoming-integrations',
 	'manage-own-outgoing-integrations',
 	'manage-own-incoming-integrations',
+	'view-engagement-dashboard',
 ];
 
 const style = {
@@ -65,18 +68,9 @@ const UserDropdown = ({ user, onClose }) => {
 
 	const handleCustomStatus = useMutableCallback((e) => {
 		e.preventDefault();
-		modal.open({
-			title: t('Edit_Status'),
-			content: 'editStatus',
-			data: {
-				onSave() {
-					modal.close();
-				},
-			},
-			modalClass: 'modal',
-			showConfirmButton: false,
-			showCancelButton: false,
-			confirmOnEnter: false,
+		imperativeModal.open({
+			component: EditStatusModal,
+			props: { userStatus: status, userStatusText: statusText, onClose: imperativeModal.close },
 		});
 		onClose();
 	});
@@ -111,7 +105,7 @@ const UserDropdown = ({ user, onClose }) => {
 					display='flex'
 					overflow='hidden'
 					flexDirection='column'
-					fontScale='p1'
+					fontScale='p3'
 					mb='neg-x4'
 					flexGrow={1}
 					flexShrink={1}
