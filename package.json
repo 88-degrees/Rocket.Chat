@@ -191,7 +191,7 @@
 		"@types/lodash": "^4.14.177",
 		"@types/lodash.debounce": "^4.0.6",
 		"adm-zip": "0.4.14",
-		"agenda": "github:RocketChat/agenda#3.1.2",
+		"agenda": "github:RocketChat/agenda#v4.2.1",
 		"ajv": "^8.7.1",
 		"apn": "2.2.0",
 		"archiver": "^3.1.1",
