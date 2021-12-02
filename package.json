@@ -135,7 +135,7 @@
 		"eslint-plugin-prettier": "^3.4.0",
 		"eslint-plugin-react": "^7.24.0",
 		"eslint-plugin-react-hooks": "^4.2.0",
-		"eslint-plugin-testing-library": "^5.0.0",
+		"eslint-plugin-testing-library": "^5.0.1",
 		"fast-glob": "^3.2.5",
 		"husky": "^7.0.1",
 		"i18next": "^20.3.2",
