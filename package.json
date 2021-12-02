@@ -86,7 +86,7 @@
 		"@types/imap": "^0.8.35",
 		"@types/jsdom": "^16.2.12",
 		"@types/jsdom-global": "^3.0.2",
-		"@types/ldapjs": "^2.2.1",
+		"@types/ldapjs": "^2.2.2",
 		"@types/less": "^3.0.2",
 		"@types/lodash.get": "^4.4.6",
 		"@types/mailparser": "^3.0.2",
