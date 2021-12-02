@@ -230,7 +230,7 @@
 		"fibers": "5.0.0",
 		"file-type": "^10.11.0",
 		"filenamify": "^4.3.0",
-		"filesize": "^3.6.1",
+		"filesize": "^8.0.6",
 		"googleapis": "^25.0.0",
 		"grapheme-splitter": "^1.0.4",
 		"gridfs-stream": "^1.1.1",
