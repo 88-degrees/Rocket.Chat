@@ -37,7 +37,7 @@
 		"mem": "^9.0.1",
 		"moleculer": "^0.14.14",
 		"mongodb": "^4.2.1",
-		"nats": "^1.4.12",
+		"nats": "^2.4.0",
 		"pino": "^7.0.3",
 		"sodium-native": "^3.3.0",
 		"sodium-plus": "^0.9.0",
@@ -56,7 +56,7 @@
 		"pino-pretty": "^7.2.0",
 		"pm2": "^5.1.2",
 		"ts-node": "^10.0.0",
-		"typescript": "^4.3.5"
+		"typescript": "^4.5.2"
 	},
 	"volta": {
 		"node": "12.22.1",
