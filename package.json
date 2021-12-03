@@ -263,7 +263,7 @@
 		"mime-db": "^1.48.0",
 		"mime-type": "^4.0.0",
 		"mkdirp": "^0.5.5",
-		"moleculer": "^0.14.14",
+		"moleculer": "^0.14.18",
 		"moment": "^2.29.1",
 		"moment-timezone": "^0.5.33",
 		"mongodb": "^3.6.9",
