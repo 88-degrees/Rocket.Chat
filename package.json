@@ -268,7 +268,7 @@
 		"moment-timezone": "^0.5.33",
 		"mongodb": "^3.6.9",
 		"mongodb-memory-server": "^7.4.1",
-		"nats": "^1.4.8",
+		"nats": "^2.4.0",
 		"node-dogstatsd": "^0.0.7",
 		"node-gcm": "1.0.0",
 		"node-rsa": "^1.1.1",
