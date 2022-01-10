@@ -298,7 +298,7 @@
 		"speakeasy": "^2.0.0",
 		"stream-buffers": "^3.0.2",
 		"string-strip-html": "^7.0.3",
-		"tar-stream": "^1.6.2",
+		"tar-stream": "^2.2.0",
 		"tinykeys": "^1.2.0",
 		"toastr": "^2.1.4",
 		"turndown": "^5.0.3",
