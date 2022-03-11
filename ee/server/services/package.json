@@ -34,7 +34,7 @@
 		"eventemitter3": "^4.0.7",
 		"express": "^4.17.3",
 		"jaeger-client": "^3.19.0",
-		"mem": "^9.0.1",
+		"mem": "^9.0.2",
 		"moleculer": "^0.14.18",
 		"mongodb": "^4.3.0",
 		"nats": "^2.4.0",
