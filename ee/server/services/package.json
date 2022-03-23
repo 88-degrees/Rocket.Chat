@@ -24,7 +24,7 @@
 	"dependencies": {
 		"@rocket.chat/emitter": "^0.31.1",
 		"@rocket.chat/string-helpers": "^0.31.6",
-		"ajv": "^8.8.2",
+		"ajv": "^8.11.0",
 		"bcrypt": "^5.0.1",
 		"body-parser": "^1.19.0",
 		"colorette": "^2.0.16",
