@@ -158,13 +158,13 @@ jobs:
           tar czf Rocket.Chat.test.tar.gz ./build-test
 
       - name: Store build for tests
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: build-test
           path: /tmp/Rocket.Chat.test.tar.gz
 
       - name: Store build
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: build
           path: /tmp/build
@@ -279,21 +279,21 @@ jobs:
           docker exec mongo mongo rocketchat --eval 'db.dropDatabase()' && npm run testci -- --test=test:playwright
 
       - name: Store playwright test trace
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         if: failure()
         with:
           name: playwright-test-trace
           path: ./apps/meteor/tests/e2e/test-failures*
 
       - name: Store cypress test screenshots
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         if: failure()
         with:
           name: cypress-test-screenshots
           path: ./apps/meteor/tests/cypress/screenshots*
 
       - name: Store cypress test videos
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         if: failure()
         with:
           name: cypress-test-videos
@@ -430,21 +430,21 @@ jobs:
           docker exec mongo mongo rocketchat --eval 'db.dropDatabase()' && npm run testci -- --enterprise --test=test:playwright:ee
 
       - name: Store playwright test trace
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         if: failure()
         with:
           name: ee-playwright-test-trace
           path: ./apps/meteor/tests/e2e/test-failures*
 
       - name: Store cypress test screenshots
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         if: failure()
         with:
           name: ee-cypress-test-screenshots
           path: ./apps/meteor/tests/cypress/screenshots*
 
       - name: Store cypress test videos
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         if: failure()
         with:
           name: ee-cypress-test-videos
