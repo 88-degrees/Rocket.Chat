@@ -298,7 +298,7 @@
 		"node-dogstatsd": "^0.0.7",
 		"node-gcm": "1.0.0",
 		"node-rsa": "^1.1.1",
-		"nodemailer": "^6.6.2",
+		"nodemailer": "^6.7.3",
 		"object-path": "^0.11.8",
 		"path": "^0.12.7",
 		"path-to-regexp": "^6.2.0",
