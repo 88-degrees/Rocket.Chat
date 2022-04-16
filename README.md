@@ -1,19 +1,23 @@
 ## [Rocket.Chat](https://rocket.chat) is an open-source communications platform
 
-Source Code is **JavaScript**, fully customizable, developed for organizations with high standards of data protection.
+Rocket.Chat is fully customizable, developed for organizations with high standards of data protection.
 
-We are a MERN based application enabling real-time conversations between colleagues, with other companies or with your customers, regardless of how they connect with you. The result is an increase in productivity and customer satisfaction rates.
+Rocket.Chat adopt **MERN Architecture**.
 
-Every day, tens of millions of users in over 150 countries and in organizations such as Deutsche Bahn, The US Navy, and Credit Suisse trust [Rocket.Chat](https://rocket.chat) to keep their communications completely private and secure.
+![MERN](https://www.iteachrecruiters.com/static/8a654a227673c6bb13be63fd6aa051ee/fa92b/iteachrecruiters-mern-stack-diagram.png)
+
+MERN is a full-stack, following the traditional 3-tier architectural pattern, including the front-end display tier (React.JS), application tier (Express.JS and Node.JS), and database tier (MongoDB).
+
+Rocket.Chat enabling real-time conversations between colleagues, with other companies or with your customers, regardless of how they connect with you. The result is an increase in productivity and customer satisfaction rates.
 
  * [Review product documentation](https://docs.rocket.chat)
  * [Review developer documentation](https://developer.rocket.chat)
  
 Using our self-managed offerings you can deploy Rocket.Chat on your own server, or you can use SaaS Rocket.Chat. We offer support for both community as well as commercial plans.
  
-<img src="https://assets-global.website-files.com/611a19b9853b7414a0f6b3f6/6167fcdbf6dfba1fd2ebc59b_hero-img%20(1).png"/>
+![Desktop](https://assets-global.website-files.com/611a19b9853b7414a0f6b3f6/6167fcdbf6dfba1fd2ebc59b_hero-img%20(1).png)
 
-<img src="https://assets-global.website-files.com/611a19b9853b7414a0f6b3f6/62330c94833bb061e29ff1dc_in-app-chat-messaging.png"/>
+![Mobile](https://assets-global.website-files.com/611a19b9853b7414a0f6b3f6/62330c94833bb061e29ff1dc_in-app-chat-messaging.png)
 
 ## Cloud Hosted Rocket.Chat
 
