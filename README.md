@@ -13,6 +13,7 @@ Using our self-managed offerings you can deploy Rocket.Chat on your own server, 
  
 <img src="https://assets-global.website-files.com/611a19b9853b7414a0f6b3f6/6167fcdbf6dfba1fd2ebc59b_hero-img%20(1).png"/>
 
+<img src="https://assets-global.website-files.com/611a19b9853b7414a0f6b3f6/62330c94833bb061e29ff1dc_in-app-chat-messaging.png"/>
 
 ## Cloud Hosted Rocket.Chat
 
@@ -20,6 +21,7 @@ https://cloud.rocket.chat/trial
 
 
 ## Installation
+
 Please see the [requirements documentation](https://docs.rocket.chat/installing-and-updating/minimum-requirements-for-using-rocket.chat) for system requirements and more information about supported operating systems.
 Please refer to [Install Rocket.Chat](https://rocket.chat/install) to install your Rocket.Chat instance.
 
