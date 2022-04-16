@@ -11,7 +11,7 @@ Every day, tens of millions of users in over 150 countries and in organizations 
  
 Using our self-managed offerings you can deploy Rocket.Chat on your own server, or you can use SaaS Rocket.Chat. We offer support for both community as well as commercial plans.
  
-<img src="https://github.com/RocketChat/Rocket.Chat.Artwork/blob/master/Product%20Images/Welcome%20to%20RC%20(Readme).jpg" data-canonical-src="https://github.com/RocketChat/Rocket.Chat.Artwork/blob/master/Product%20Images/Welcome%20to%20RC%20(Readme).jpg" width="919" height="511" />
+<img src="https://assets-global.website-files.com/611a19b9853b7414a0f6b3f6/6167fcdbf6dfba1fd2ebc59b_hero-img%20(1).png"/>
 
 
 ## Cloud Hosted Rocket.Chat
