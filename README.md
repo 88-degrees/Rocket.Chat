@@ -13,8 +13,6 @@ Rocket.Chat enabling real-time conversations between colleagues, with other comp
  * [Review product documentation](https://docs.rocket.chat)
  * [Review developer documentation](https://developer.rocket.chat)
  
-Using our self-managed offerings you can deploy Rocket.Chat on your own server, or you can use SaaS Rocket.Chat. We offer support for both community as well as commercial plans.
- 
 ![Desktop](https://assets-global.website-files.com/611a19b9853b7414a0f6b3f6/6167fcdbf6dfba1fd2ebc59b_hero-img%20(1).png)
 
 ![Mobile](https://assets-global.website-files.com/611a19b9853b7414a0f6b3f6/62330c94833bb061e29ff1dc_in-app-chat-messaging.png)
@@ -23,12 +21,10 @@ Using our self-managed offerings you can deploy Rocket.Chat on your own server, 
 
 https://cloud.rocket.chat/trial
 
-
 ## Installation
 
 Please see the [requirements documentation](https://docs.rocket.chat/installing-and-updating/minimum-requirements-for-using-rocket.chat) for system requirements and more information about supported operating systems.
 Please refer to [Install Rocket.Chat](https://rocket.chat/install) to install your Rocket.Chat instance.
-
 
 ## Feature Request 
 
@@ -51,7 +47,6 @@ Rocket.Chat is an open source project and we are very happy to accept community 
 * Testing with [BrowserStack](https://www.browserstack.com).
 * Translations done with [LingoHub](https://lingohub.com).
 
-
 ## Mobile Apps
 
 In addition to the web interface, you can also download Rocket.Chat clients for:
@@ -59,22 +54,9 @@ In addition to the web interface, you can also download Rocket.Chat clients for:
 [![Rocket.Chat on Apple App Store](https://user-images.githubusercontent.com/551004/29770691-a2082ff4-8bc6-11e7-89a6-964cd405ea8e.png)](https://itunes.apple.com/us/app/rocket-chat/id1148741252?mt=8) [![Rocket.Chat on Google Play](https://user-images.githubusercontent.com/551004/29770692-a20975c6-8bc6-11e7-8ab0-1cde275496e0.png)](https://play.google.com/store/apps/details?id=chat.rocket.android)  [![](https://user-images.githubusercontent.com/551004/48210349-50649480-e35e-11e8-97d9-74a4331faf3a.png)](https://f-droid.org/en/packages/chat.rocket.android)
 
 ## Learn More
+
 * [API](https://developer.rocket.chat/reference/api)
 * [See who's using Rocket.Chat](https://rocket.chat/customer-stories)
-
-## Become a Rocketeer
-We're hiring developers, support people, and product managers all the time. Please check our [jobs page](https://rocket.chat/jobs).
-
-## Get the Latest News
-
-* [Twitter](https://twitter.com/RocketChat)
-* [Blog](https://rocket.chat/blog)
-* [Facebook](https://www.facebook.com/RocketChatApp)
-* [LinkedIn](https://www.linkedin.com/company/rocket-chat)
-* [Youtube](https://www.youtube.com/channel/UCin9nv7mUjoqrRiwrzS5UVQ)
-* [Email Newsletter](https://rocket.chat/newsletter)
-
-Any other questions, reach out to us at [our website](https://rocket.chat/contact) or you can email us directly at [contact@rocket.chat](mailto:contact@rocket.chat). We’d be happy to help!
 
 <img src="https://github.com/RocketChat/Rocket.Chat.Artwork/raw/master/Logos/2020/png/logo-horizontal-red.png" data-canonical-src="https://github.com/RocketChat/Rocket.Chat.Artwork/raw/master/Logos/2020/png/logo-horizontal-red.png" width="500" />
 
