@@ -177,7 +177,7 @@
 		"webpack": "^4.44.1"
 	},
 	"dependencies": {
-		"@babel/runtime": "^7.15.4",
+		"@babel/runtime": "^7.17.9",
 		"@bugsnag/js": "^7.11.0",
 		"@google-cloud/language": "^3.8.0",
 		"@google-cloud/storage": "^5.19.2",
