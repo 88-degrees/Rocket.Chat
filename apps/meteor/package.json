@@ -251,7 +251,7 @@
 		"express-rate-limit": "^5.2.6",
 		"fflate": "^0.7.1",
 		"fibers": "^5.0.1",
-		"file-type": "^10.11.0",
+		"file-type": "^17.1.1",
 		"filenamify": "^5.1.0",
 		"filesize": "^3.6.1",
 		"google-libphonenumber": "^3.2.25",
