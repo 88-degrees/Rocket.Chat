@@ -35,7 +35,7 @@
 		"express": "^4.17.3",
 		"jaeger-client": "^3.19.0",
 		"mem": "^9.0.2",
-		"moleculer": "^0.14.19",
+		"moleculer": "^0.14.20",
 		"mongodb": "^4.5.0",
 		"nats": "^2.6.1",
 		"pino": "^7.10.0",
