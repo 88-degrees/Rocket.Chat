@@ -76,7 +76,7 @@
 		"@rocket.chat/livechat": "workspace:^",
 		"@settlin/spacebars-loader": "^1.0.9",
 		"@storybook/addon-essentials": "~6.4.19",
-		"@storybook/addon-interactions": "~6.4.19",
+		"@storybook/addon-interactions": "~6.5.3",
 		"@storybook/addon-postcss": "^2.0.0",
 		"@storybook/addons": "~6.4.19",
 		"@storybook/react": "~6.4.19",
