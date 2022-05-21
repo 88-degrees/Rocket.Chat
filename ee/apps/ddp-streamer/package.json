@@ -23,7 +23,7 @@
 		"eventemitter3": "^4.0.7",
 		"fibers": "^5.0.1",
 		"jaeger-client": "^3.19.0",
-		"moleculer": "^0.14.19",
+		"moleculer": "^0.14.21",
 		"mongodb": "^3.6.10",
 		"nats": "^2.4.0",
 		"pino": "^7.9.2",

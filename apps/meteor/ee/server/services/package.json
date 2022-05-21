@@ -42,7 +42,7 @@
 		"fibers": "^5.0.1",
 		"jaeger-client": "^3.19.0",
 		"mem": "^8.1.1",
-		"moleculer": "^0.14.20",
+		"moleculer": "^0.14.21",
 		"mongodb": "^3.6.10",
 		"nats": "^2.4.0",
 		"pino": "^7.10.0",
