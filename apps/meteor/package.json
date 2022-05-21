@@ -147,7 +147,7 @@
 		"cross-env": "^7.0.3",
 		"cypress": "^7.7.0",
 		"emojione-assets": "^4.5.0",
-		"eslint": "^6.8.0",
+		"eslint": "^8.16.0",
 		"eslint-config-prettier": "^8.3.0",
 		"eslint-plugin-import": "^2.26.0",
 		"eslint-plugin-prettier": "^3.4.1",
