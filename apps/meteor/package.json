@@ -207,7 +207,7 @@
 		"@rocket.chat/mp3-encoder": "^0.24.0",
 		"@rocket.chat/onboarding-ui": "~0.31.11",
 		"@rocket.chat/rest-typings": "workspace:^",
-		"@rocket.chat/string-helpers": "~0.31.11",
+		"@rocket.chat/string-helpers": "~0.31.16",
 		"@rocket.chat/ui-contexts": "workspace:^",
 		"@rocket.chat/ui-kit": "~0.31.11",
 		"@slack/client": "^4.12.0",
