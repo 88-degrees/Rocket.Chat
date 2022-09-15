@@ -1,6 +1,6 @@
 import { Meteor } from 'meteor/meteor';
 import { Match, check } from 'meteor/check';
-import { IIntegration } from '@rocket.chat/core-typings';
+import type { IIntegration } from '@rocket.chat/core-typings';
 import {
 	isIntegrationsCreateProps,
 	isIntegrationsHistoryProps,
@@ -8,9 +8,10 @@ import {
 	isIntegrationsGetProps,
 	isIntegrationsUpdateProps,
 } from '@rocket.chat/rest-typings';
+import { Integrations, IntegrationHistory } from '@rocket.chat/models';
+import type { Filter } from 'mongodb';
 
 import { hasAtLeastOnePermission } from '../../../authorization/server';
-import { Integrations, IntegrationHistory } from '../../../models/server/raw';
 import { API } from '../api';
 import {
 	mountIntegrationHistoryQueryBasedOnPermissions,
@@ -22,33 +23,15 @@ API.v1.addRoute(
 	'integrations.create',
 	{ authRequired: true, validateParams: isIntegrationsCreateProps },
 	{
-		post() {
-			const { userId, bodyParams } = this;
-
-			const integration = ((): IIntegration | undefined => {
-				let integration: IIntegration | undefined;
-
-				switch (bodyParams.type) {
-					case 'webhook-outgoing':
-						Meteor.runAsUser(userId, () => {
-							integration = Meteor.call('addOutgoingIntegration', bodyParams);
-						});
-						break;
-					case 'webhook-incoming':
-						Meteor.runAsUser(userId, () => {
-							integration = Meteor.call('addIncomingIntegration', bodyParams);
-						});
-						break;
-				}
-
-				return integration;
-			})();
-
-			if (!integration) {
-				return API.v1.failure('Invalid integration type.');
+		async post() {
+			switch (this.bodyParams.type) {
+				case 'webhook-outgoing':
+					return API.v1.success({ integration: await Meteor.call('addOutgoingIntegration', this.bodyParams) });
+				case 'webhook-incoming':
+					return API.v1.success({ integration: await Meteor.call('addIncomingIntegration', this.bodyParams) });
 			}
 
-			return API.v1.success({ integration });
+			return API.v1.failure('Invalid integration type.');
 		},
 	},
 );
@@ -57,7 +40,7 @@ API.v1.addRoute(
 	'integrations.history',
 	{ authRequired: true, validateParams: isIntegrationsHistoryProps },
 	{
-		get() {
+		async get() {
 			const { userId, queryParams } = this;
 
 			if (!hasAtLeastOnePermission(userId, ['manage-outgoing-integrations', 'manage-own-outgoing-integrations'])) {
@@ -73,15 +56,14 @@ API.v1.addRoute(
 			const { sort, fields: projection, query } = this.parseJsonQuery();
 			const ourQuery = Object.assign(mountIntegrationHistoryQueryBasedOnPermissions(userId, id), query);
 
-			const cursor = IntegrationHistory.find(ourQuery, {
+			const { cursor, totalCount } = IntegrationHistory.findPaginated(ourQuery, {
 				sort: sort || { _updatedAt: -1 },
 				skip: offset,
 				limit: count,
 				projection,
 			});
 
-			const history = Promise.await(cursor.toArray());
-			const total = Promise.await(cursor.count());
+			const [history, total] = await Promise.all([cursor.toArray(), totalCount]);
 
 			return API.v1.success({
 				history,
@@ -98,7 +80,7 @@ API.v1.addRoute(
 	'integrations.list',
 	{ authRequired: true },
 	{
-		get() {
+		async get() {
 			if (
 				!hasAtLeastOnePermission(this.userId, [
 					'manage-outgoing-integrations',
@@ -113,17 +95,16 @@ API.v1.addRoute(
 			const { offset, count } = this.getPaginationItems();
 			const { sort, fields: projection, query } = this.parseJsonQuery();
 
-			const ourQuery = Object.assign(mountIntegrationQueryBasedOnPermissions(this.userId), query);
-			const cursor = Integrations.find(ourQuery, {
+			const ourQuery = Object.assign(mountIntegrationQueryBasedOnPermissions(this.userId), query) as Filter<IIntegration>;
+
+			const { cursor, totalCount } = Integrations.findPaginated(ourQuery, {
 				sort: sort || { ts: -1 },
 				skip: offset,
 				limit: count,
 				projection,
 			});
 
-			const total = Promise.await(cursor.count());
-
-			const integrations = Promise.await(cursor.toArray());
+			const [integrations, total] = await Promise.all([cursor.toArray(), totalCount]);
 
 			return API.v1.success({
 				integrations,

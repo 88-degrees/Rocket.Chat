@@ -3,10 +3,11 @@ import { Accounts } from 'meteor/accounts-base';
 import _ from 'underscore';
 import s from 'underscore.string';
 import { Gravatar } from 'meteor/jparker:gravatar';
+import { isUserFederated } from '@rocket.chat/core-typings';
 
 import * as Mailer from '../../../mailer';
 import { getRoles, hasPermission } from '../../../authorization';
-import { settings } from '../../../settings';
+import { settings } from '../../../settings/server';
 import { passwordPolicy } from '../lib/passwordPolicy';
 import { validateEmailDomain } from '../lib';
 import { getNewUserRoles } from '../../../../server/services/user/lib/getNewUserRoles';
@@ -15,6 +16,7 @@ import { checkEmailAvailability, checkUsernameAvailability, setUserAvatar, setEm
 import { Users } from '../../../models/server';
 import { callbacks } from '../../../../lib/callbacks';
 import { AppEvents, Apps } from '../../../apps/server/orchestrator';
+import { safeGetMeteorUser } from '../../../utils/server/functions/safeGetMeteorUser';
 
 const MAX_BIO_LENGTH = 260;
 const MAX_NICKNAME_LENGTH = 120;
@@ -328,6 +330,10 @@ const saveNewUser = function (userData, sendPassword) {
 };
 
 export const saveUser = function (userId, userData) {
+	const oldUserData = Users.findOneById(userData._id);
+	if (oldUserData && isUserFederated(oldUserData)) {
+		throw new Meteor.Error('Edit_Federated_User_Not_Allowed', 'Not possible to edit a federated user');
+	}
 	validateUserData(userId, userData);
 	let sendPassword = false;
 
@@ -346,8 +352,6 @@ export const saveUser = function (userId, userData) {
 	}
 
 	validateUserEditing(userId, userData);
-
-	const oldUserData = Users.findOneById(userId);
 
 	// update user
 	if (userData.hasOwnProperty('username') || userData.hasOwnProperty('name')) {
@@ -420,7 +424,7 @@ export const saveUser = function (userId, userData) {
 		Apps.triggerEvent(AppEvents.IPostUserUpdated, {
 			user: userUpdated,
 			previousUser: oldUserData,
-			performedBy: Meteor.user(),
+			performedBy: safeGetMeteorUser(),
 		}),
 	);
 
