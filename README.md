@@ -15,7 +15,7 @@ Rocket.Chat enabling real-time conversations between colleagues, with other comp
 
 Using our self-managed offerings you can deploy Rocket.Chat on your own server, or you can use SaaS Rocket.Chat. We offer support for both community as well as commercial plans.
 
-![UI](https://github.com/RocketChat/Rocket.Chat.Artwork/blob/master/Product%20Images/Welcome%20to%20RC%20(Readme).jpg)
+![UI](https://github.com/RocketChat/Rocket.Chat.Artwork/blob/master/Product%20Images/Desktop_Composition/Desktop_Composition.png?raw=true)
 
 ## Cloud Hosted Rocket.Chat
 
