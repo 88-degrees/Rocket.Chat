@@ -275,7 +275,7 @@
 		"cors": "^2.8.5",
 		"cron": "~1.8.0",
 		"css-vars-ponyfill": "^2.4.7",
-		"csv-parse": "^5.2.0",
+		"csv-parse": "^5.3.0",
 		"date-fns": "^2.28.0",
 		"date.js": "~0.3.3",
 		"debug": "~4.1.1",
