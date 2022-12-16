@@ -1,12 +1,12 @@
 ## [Rocket.Chat](https://rocket.chat) is an open-source communications platform
 
-Rocket.Chat is fully customizable, developed for organizations with high standards of data protection.
+**Rocket.Chat** is fully customizable, developed for organizations with high standards of data protection.
 
 Rocket.Chat adopt **MERN Architecture**.
 
 ![MERN](https://www.iteachrecruiters.com/static/8a654a227673c6bb13be63fd6aa051ee/fa92b/iteachrecruiters-mern-stack-diagram.png)
 
-MERN is a full-stack, following the traditional 3-tier architectural pattern, including the front-end display tier (React.JS), application tier (Express.JS and Node.JS), and database tier (MongoDB).
+MERN is a full-stack, following the traditional **3-tier architectural** pattern, including the front-end display tier (React.JS), application tier (Express.JS and Node.JS), and database tier (MongoDB).
 
 Rocket.Chat enabling real-time conversations between colleagues, with other companies or with your customers, regardless of how they connect with you. The result is an increase in productivity and customer satisfaction rates.
 
@@ -58,17 +58,6 @@ Please refer to [Install Rocket.Chat](https://rocket.chat/install) to install yo
 
 [Rocket.Chat/feature-requests](https://github.com/RocketChat/feature-requests) is used to track Rocket.Chat feature requests and discussions. Click [here](https://github.com/RocketChat/feature-requests/issues/new?template=feature_request.md) to open a new feature request. [Feature Request Forums](https://forums.rocket.chat/c/feature-requests/8) stores the historical archives of old feature requests (up to 2018).
 
-## Community
-
-Join thousands of members worldwide in our [community server](https://open.rocket.chat).
-Join [#Support](https://open.rocket.chat/channel/support) for help from our community with general Rocket.Chat questions.
-Join [#Dev](https://open.rocket.chat/channel/dev) for needing help from the community to develop new features.
-Talk with Rocket.Chat's leadership at the [Community Open Call](https://www.youtube.com/playlist?list=PLee3gqXJQrFVaxryc0OKTKc92yqQX9U-5), held monthly. Join us for [the next Community Open Call](https://app.livestorm.co/rocket-chat/community-open-call?type=detailed).
-
-## Contributions
-
-Rocket.Chat is an open source project and we are very happy to accept community contributions. Please refer to the [How can I help?](https://docs.rocket.chat/contributors/how-can-i-help) for more details.
-
 ## Credits
 
 - Emoji provided graciously by [JoyPixels](https://www.joypixels.com).
@@ -100,9 +89,9 @@ We're hiring developers, support people, and product managers all the time. Plea
 - [Email Newsletter](https://rocket.chat/newsletter)
 
 <a href="https://brianmacdonald.github.io/Ethonate/address#0xD5645363C02044482983E60a58eb8A0a8DA2588C">
-  <img style="width:99px" src="https://brianmacdonald.github.io/Ethonate/svg/eth-donate-blue.svg" />
+  <img style="width:111px" src="https://brianmacdonald.github.io/Ethonate/svg/eth-donate-blue.svg" />
 </a>
 
-<a href="https://donate.cafe/chatbot">
-  <img style="width:99px" src="https://newbie.zeromesh.net/donate.7.6.svg" />
+<a href="https://donate.cafe/Tenet">
+  <img style="width:111px" src="https://newbie.zeromesh.net/donate.7.6.svg" />
 </a>
