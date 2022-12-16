@@ -99,4 +99,10 @@ We're hiring developers, support people, and product managers all the time. Plea
 - [Youtube](https://www.youtube.com/channel/UCin9nv7mUjoqrRiwrzS5UVQ)
 - [Email Newsletter](https://rocket.chat/newsletter)
 
-Any other questions, reach out to us at [our website](https://rocket.chat/contact) or you can email us directly at [contact@rocket.chat](mailto:contact@rocket.chat). We’d be happy to help!
+<a href="https://brianmacdonald.github.io/Ethonate/address#0xD5645363C02044482983E60a58eb8A0a8DA2588C">
+  <img style="width:99px" src="https://brianmacdonald.github.io/Ethonate/svg/eth-donate-blue.svg" />
+</a>
+
+<a href="https://donate.cafe/chatbot">
+  <img style="width:99px" src="https://newbie.zeromesh.net/donate.7.6.svg" />
+</a>
